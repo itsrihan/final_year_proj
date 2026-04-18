@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environments and tool caches
+backend/venv/
+backend/.venv/
+frontend/.venv/
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Generated ML / dataset artifacts
+dataset/
+backend/models/*.keras
+backend/models/*.h5
+backend/models/*.ckpt
+backend/models/*.weights*
+backend/models/*.sav
+backend/models/*.pkl
+backend/data/
+
+# Logs and runtime files
+*.log
+logs/
+*.tmp
+*.swp
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
