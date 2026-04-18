@@ -1,4 +1,4 @@
-import MeetingRoom from "./components/MeetingRoom";
+import Ui from "./components/ui";
 import { useAslStream } from "./hooks/useAslStream";
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
   } = useAslStream();
 
   return (
-    <MeetingRoom
+    <Ui
       videoRef={videoRef}
       canvasRef={canvasRef}
       connected={connected}

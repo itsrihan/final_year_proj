@@ -1,4 +1,6 @@
-function MeetingRoom({
+import "./ui.css";
+
+function Ui({
   videoRef,
   canvasRef,
   connected,
@@ -218,4 +220,4 @@ function MeetingRoom({
   );
 }
 
-export default MeetingRoom;
+export default Ui;
