@@ -211,7 +211,18 @@ class PhrasePredictor:
         data_dir="data/phrases",
     ):
         self.model, self.index_to_label = load_phrase_assets(model_path, labels_path, data_dir)
+
         self.sequence = []
+        self.last_label = "Waiting..."
+        self.last_confidence = 0.0
+
+        self.missing_frames = 0
+        self.frames_since_last_predict = 0
+
+        self.min_frames_to_predict = min(24, FRAMES)
+        self.predict_every_n_frames = 2
+        self.missing_grace_frames = 12
+        self.stable_threshold = THRESHOLD
 
     def extract_keypoints(self, mp_bundle):
         if not isinstance(mp_bundle, MediaPipeBundle):
@@ -225,29 +236,73 @@ class PhrasePredictor:
         extractor = LandmarkExtractor.__new__(LandmarkExtractor)
         return LandmarkExtractor.extract_features(extractor, mp_bundle)
 
-    def predict(self, mp_bundle):
-        keypoints = self.extract_keypoints(mp_bundle)
-        self.sequence.append(keypoints)
-        self.sequence = self.sequence[-FRAMES:]
+    def _build_input_sequence(self):
+        if not self.sequence:
+            return None
 
-        if len(self.sequence) < FRAMES:
-            return "Waiting...", 0.0
+        arr = np.asarray(self.sequence, dtype=np.float32)
 
-        input_data = np.expand_dims(np.asarray(self.sequence, dtype=np.float32), axis=0)
-        res = self.model.predict(input_data, verbose=0)[0]
+        if arr.ndim != 2:
+            return None
 
-        predicted_index = int(np.argmax(res))
-        confidence = float(res[predicted_index])
+        normalized = np.zeros((FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
 
-        label = self.index_to_label.get(predicted_index, "Unknown")
+        if len(arr) >= FRAMES:
+            normalized[:] = arr[-FRAMES:]
+        else:
+            normalized[:len(arr)] = arr
 
-        if confidence >= THRESHOLD:
-            return label, confidence
+        return normalized
 
-        return "Uncertain", confidence
+    def predict(self, mp_bundle, hands_detected=True):
+        if hands_detected:
+            self.missing_frames = 0
+
+            keypoints = self.extract_keypoints(mp_bundle)
+            self.sequence.append(keypoints)
+            self.sequence = self.sequence[-FRAMES:]
+
+            if len(self.sequence) < self.min_frames_to_predict:
+                return "Waiting...", 0.0
+
+            self.frames_since_last_predict += 1
+            if self.frames_since_last_predict < self.predict_every_n_frames:
+                return self.last_label, self.last_confidence
+
+            self.frames_since_last_predict = 0
+
+            input_sequence = self._build_input_sequence()
+            if input_sequence is None:
+                return self.last_label, self.last_confidence
+
+            input_data = np.expand_dims(input_sequence, axis=0)
+            res = self.model.predict(input_data, verbose=0)[0]
+
+            predicted_index = int(np.argmax(res))
+            confidence = float(res[predicted_index])
+            label = self.index_to_label.get(predicted_index, "Unknown")
+
+            if confidence >= self.stable_threshold:
+                self.last_label = label
+                self.last_confidence = confidence
+                return label, confidence
+
+            return self.last_label, self.last_confidence
+
+        self.missing_frames += 1
+
+        if self.missing_frames <= self.missing_grace_frames:
+            return self.last_label, self.last_confidence
+
+        self.reset()
+        return self.last_label, self.last_confidence
 
     def reset(self):
         self.sequence = []
+        self.last_label = "Waiting..."
+        self.last_confidence = 0.0
+        self.missing_frames = 0
+        self.frames_since_last_predict = 0
 
     def close(self):
         pass

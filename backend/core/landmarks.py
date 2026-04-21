@@ -25,33 +25,36 @@ class LandmarkExtractor:
         self.hands = mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=2,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.7,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
         )
 
         self.pose = mp_pose.Pose(
             static_image_mode=False,
-            model_complexity=1,
+            model_complexity=0,
             smooth_landmarks=True,
             enable_segmentation=False,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.7,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
         )
 
         self.face_mesh = mp_face_mesh.FaceMesh(
             static_image_mode=False,
             max_num_faces=1,
             refine_landmarks=False,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.7,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
         )
 
     def process_frame(self, frame_bgr):
         rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        rgb.flags.writeable = False
 
         hands_results = self.hands.process(rgb)
         pose_results = self.pose.process(rgb)
         face_results = self.face_mesh.process(rgb)
+
+        rgb.flags.writeable = True
 
         return MediaPipeBundle(
             hands_results=hands_results,
@@ -65,15 +68,10 @@ class LandmarkExtractor:
         self.face_mesh.close()
 
     def _get_pose_anchor_and_scale(self, pose_results):
-        """
-        Use midpoint of shoulders as anchor.
-        Use shoulder distance as scale.
-        """
-        if not pose_results.pose_landmarks:
+        if not pose_results or not pose_results.pose_landmarks:
             return None, None
 
         lm = pose_results.pose_landmarks.landmark
-
         left_shoulder = lm[POSE_LANDMARKS["left_shoulder"]]
         right_shoulder = lm[POSE_LANDMARKS["right_shoulder"]]
 
@@ -108,14 +106,9 @@ class LandmarkExtractor:
         return ((xyz - anchor) / scale).astype(np.float32)
 
     def extract_hand_features(self, hands_results, anchor, scale):
-        """
-        Always return fixed size:
-        2 hands max, each 21 * 3 = 63
-        total = 126
-        """
         features = []
 
-        if hands_results.multi_hand_landmarks:
+        if hands_results and hands_results.multi_hand_landmarks:
             hand_list = hands_results.multi_hand_landmarks[:2]
 
             for hand_landmarks in hand_list:
@@ -133,13 +126,9 @@ class LandmarkExtractor:
         return features
 
     def extract_pose_features(self, pose_results, anchor, scale):
-        """
-        Selected upper-body pose only.
-        Each landmark = x, y, z, visibility
-        """
         features = []
 
-        if pose_results.pose_landmarks:
+        if pose_results and pose_results.pose_landmarks:
             landmarks = pose_results.pose_landmarks.landmark
 
             for landmark_name in POSE_LANDMARKS:
@@ -157,13 +146,9 @@ class LandmarkExtractor:
         return features
 
     def extract_face_features(self, face_results, anchor, scale):
-        """
-        Selected compact face subset only.
-        Each landmark = x, y, z
-        """
         features = []
 
-        if face_results.multi_face_landmarks:
+        if face_results and face_results.multi_face_landmarks:
             face_landmarks = face_results.multi_face_landmarks[0].landmark
 
             for landmark_name in FACE_LANDMARKS:
@@ -182,15 +167,9 @@ class LandmarkExtractor:
     def extract_features(self, mp_bundle):
         anchor, scale = self._get_pose_anchor_and_scale(mp_bundle.pose_results)
 
-        hand_features = self.extract_hand_features(
-            mp_bundle.hands_results, anchor, scale
-        )
-        pose_features = self.extract_pose_features(
-            mp_bundle.pose_results, anchor, scale
-        )
-        face_features = self.extract_face_features(
-            mp_bundle.face_results, anchor, scale
-        )
+        hand_features = self.extract_hand_features(mp_bundle.hands_results, anchor, scale)
+        pose_features = self.extract_pose_features(mp_bundle.pose_results, anchor, scale)
+        face_features = self.extract_face_features(mp_bundle.face_results, anchor, scale)
 
         features = hand_features + pose_features + face_features
         features = np.asarray(features, dtype=np.float32)

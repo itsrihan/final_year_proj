@@ -1,7 +1,18 @@
+import { useState, useEffect } from "react";
 import Ui from "./components/ui";
 import { useAslStream } from "./hooks/useAslStream";
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("app-theme");
+    return saved || "dark";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("app-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
   const {
     videoRef,
     canvasRef,
@@ -41,6 +52,8 @@ function App() {
       onToggleCaptions={() => setShowCaptions((prev) => !prev)}
       onToggleAsl={() => setAslEnabled((prev) => !prev)}
       onSetActiveTab={setActiveTab}
+      theme={theme}
+      onThemeToggle={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
     />
   );
 }

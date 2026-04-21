@@ -1,6 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 
+import {
+  attachVideoElement,
+  detachVideoElement,
+  stopMediaStream,
+} from "./mediaStreamUtils";
+
 const WS_URL = "ws://localhost:8000/ws/asl";
+
+const CAMERA_CONSTRAINTS = {
+  video: {
+    facingMode: "user",
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    aspectRatio: { ideal: 1.7777778 }, // 16:9
+  },
+  audio: false,
+};
 
 export function useAslStream() {
   const videoRef = useRef(null);
@@ -37,16 +53,12 @@ export function useAslStream() {
   }, []);
 
   useEffect(() => {
-    if (!videoRef.current) {
-      return;
-    }
-
     if (cameraOn && mediaStream) {
-      videoRef.current.srcObject = mediaStream;
+      attachVideoElement(videoRef.current, mediaStream);
       return;
     }
 
-    videoRef.current.srcObject = null;
+    detachVideoElement(videoRef.current);
   }, [cameraOn, mediaStream]);
 
   useEffect(() => {
@@ -54,16 +66,14 @@ export function useAslStream() {
 
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(CAMERA_CONSTRAINTS);
 
         if (!mounted) {
-          stream.getTracks().forEach((track) => track.stop());
+          stopMediaStream(stream);
           return;
         }
 
+        stopMediaStream(streamRef.current);
         streamRef.current = stream;
         setMediaStream(stream);
         setStatus("Camera active");
@@ -107,12 +117,9 @@ export function useAslStream() {
 
     return () => {
       mounted = false;
-
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-
+      stopMediaStream(streamRef.current);
+      streamRef.current = null;
+      detachVideoElement(videoRef.current);
       setMediaStream(null);
 
       if (socketRef.current) {
@@ -136,8 +143,11 @@ export function useAslStream() {
 
       if (!video.videoWidth || !video.videoHeight) return;
 
-      canvas.width = 320;
-      canvas.height = 240;
+      const targetWidth = 640;
+      const targetHeight = Math.round((video.videoHeight / video.videoWidth) * targetWidth);
+
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
 
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -155,24 +165,15 @@ export function useAslStream() {
   }, [cameraOn, aslEnabled]);
 
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-
+    stopMediaStream(streamRef.current);
+    streamRef.current = null;
+    detachVideoElement(videoRef.current);
     setMediaStream(null);
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
   };
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
+      const stream = await navigator.mediaDevices.getUserMedia(CAMERA_CONSTRAINTS);
 
       streamRef.current = stream;
       setMediaStream(stream);

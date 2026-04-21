@@ -35,9 +35,6 @@ def root():
 
 
 def decode_base64_image(data_url: str):
-    """
-    data:image/jpeg;base64,/9j/4AAQ...
-    """
     if "," in data_url:
         _, encoded = data_url.split(",", 1)
     else:
@@ -82,30 +79,34 @@ async def asl_socket(websocket: WebSocket):
                 }))
                 continue
 
-            detected_text = "No hand detected"
-            confidence = 0.0
-            status = "ASL off"
-
             frame = cv2.flip(frame, 1)
             mp_bundle = extractor.process_frame(frame)
 
-            if mp_bundle.hands_results.multi_hand_landmarks:
-                if asl_enabled:
-                    detected_text, confidence = predictor.predict(mp_bundle)
-                    status = "ASL on"
-                else:
-                    status = "ASL off"
+            hands_detected = bool(
+                mp_bundle.hands_results
+                and mp_bundle.hands_results.multi_hand_landmarks
+            )
+
+            if not asl_enabled:
+                detected_text = "ASL off"
+                confidence = 0.0
+                status = "ASL off"
             else:
-                predictor.reset()
-                if asl_enabled:
-                    status = "ASL on"
+                detected_text, confidence = predictor.predict(
+                    mp_bundle,
+                    hands_detected=hands_detected
+                )
+
+                if hands_detected:
+                    status = "ASL on | hand detected"
                 else:
-                    status = "ASL off"
+                    status = "ASL on | no hand"
 
             await websocket.send_text(json.dumps({
                 "text": detected_text,
                 "confidence": round(confidence, 4),
-                "status": status
+                "status": status,
+                "hands_detected": hands_detected
             }))
 
     except WebSocketDisconnect:
