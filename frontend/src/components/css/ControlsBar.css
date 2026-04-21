@@ -22,28 +22,33 @@ html[data-theme="light"] .bottom-bar {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.end-btn {
+.end-btn,
+.end-btn-action {
   background: rgba(248, 113, 113, 0.1);
   color: var(--danger);
   border-color: rgba(248, 113, 113, 0.3);
 }
 
-html[data-theme="light"] .end-btn {
+html[data-theme="light"] .end-btn,
+html[data-theme="light"] .end-btn-action {
   background: rgba(220, 38, 38, 0.1);
   border-color: rgba(220, 38, 38, 0.3);
 }
 
-.end-btn:hover {
+.end-btn:hover,
+.end-btn-action:hover {
   background: rgba(248, 113, 113, 0.2);
   border-color: var(--danger);
   transform: scale(1.08);
 }
 
-html[data-theme="light"] .end-btn:hover {
+html[data-theme="light"] .end-btn:hover,
+html[data-theme="light"] .end-btn-action:hover {
   background: rgba(220, 38, 38, 0.15);
   border-color: var(--danger);
 }
 
-.end-btn:active {
+.end-btn:active,
+.end-btn-action:active {
   transform: scale(0.96);
 }

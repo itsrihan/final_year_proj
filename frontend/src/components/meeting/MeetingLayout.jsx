@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FiMoon, FiSun } from "react-icons/fi";
 import ControlsBar from "./ControlsBar";
 import MeetingVideoStage from "./MeetingVideoStage";
 import SidePanel from "./SidePanel";
@@ -54,13 +55,13 @@ function MeetingLayout({
 
       {/* Floating meeting info */}
       <div className="floating-meeting-info">
+        <button className="theme-toggle-float" onClick={onThemeToggle} title="Toggle theme">
+          {theme === "dark" ? <FiMoon size={18} /> : <FiSun size={18} />}
+        </button>
         <div className="meeting-code">
           <span className="code-label">Code:</span>
           <span className="code-value">abc-defg-hij</span>
         </div>
-        <button className="theme-toggle-float" onClick={onThemeToggle} title="Toggle theme">
-          {theme === "dark" ? "☀️" : "🌙"}
-        </button>
       </div>
 
       {/* Floating you indicator */}
@@ -84,14 +85,16 @@ function MeetingLayout({
       <ControlsBar
         micOn={micOn}
         cameraOn={cameraOn}
-        showCaptions={showCaptions}
         aslEnabled={aslEnabled}
         onToggleMic={onToggleMic}
         onToggleCamera={onToggleCamera}
-        onToggleCaptions={onToggleCaptions}
         onToggleAsl={onToggleAsl}
+        onToggleHandRaise={() => {}}
+        onEndCall={() => {}}
         onOpenPanel={() => setPanelOpen(!panelOpen)}
         panelOpen={panelOpen}
+        isDarkTheme={theme === "dark"}
+        onToggleTheme={onThemeToggle}
       />
 
       <canvas ref={canvasRef} style={{ display: "none" }} />

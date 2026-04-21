@@ -39,6 +39,26 @@ html[data-theme="light"] .control-btn:hover {
   color: var(--accent-primary);
 }
 
+.control-btn.danger-state {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: var(--danger);
+}
+
+html[data-theme="light"] .control-btn.danger-state {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.control-btn.danger-state:hover {
+  background: rgba(248, 113, 113, 0.25);
+  border-color: var(--danger);
+}
+
+html[data-theme="light"] .control-btn.danger-state:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
+
 .control-btn:active {
   transform: scale(0.96);
 }
