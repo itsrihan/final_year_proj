@@ -1,0 +1,109 @@
+/* ===== STATUS CHIPS ===== */
+.status-chip {
+  display: inline-block;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ===== INFO BOXES ===== */
+.info-box {
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+}
+
+.info-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.info-value.small {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.helper-text {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ===== PERSON ITEM ===== */
+.person-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.person-item:hover {
+  background: var(--bg-hover);
+}
+
+.person-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.person-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.person-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.person-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.active {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+}
+
+.status-indicator.online {
+  background: var(--accent-secondary);
+  box-shadow: 0 0 8px rgba(91, 155, 248, 0.3);
+}

@@ -1,0 +1,36 @@
+/* ===== ASL CAPTIONS OVERLAY ===== */
+.asl-overlay {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  min-width: 240px;
+  max-width: 360px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  animation: slideInDown 0.3s ease;
+  color: #ffffff;
+}
+
+.asl-overlay-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-secondary);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.asl-overlay-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.asl-overlay-confidence {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}

@@ -1,0 +1,71 @@
+/* ===== VIDEO AREA ===== */
+.video-area {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.main-video-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  width: 100%;
+  height: 100%;
+}
+
+.video-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.video-element {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  transform: scaleX(-1);
+}
+
+.camera-off-state {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--text-tertiary);
+  gap: 12px;
+}
+
+.camera-off-icon {
+  font-size: 64px;
+  opacity: 0.6;
+}
+
+.video-overlay-name {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+}

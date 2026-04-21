@@ -1,4 +1,4 @@
-import "./ui.css";
+import "./css/index.css";
 
 import MeetingLayout from "./meeting/MeetingLayout";
 
