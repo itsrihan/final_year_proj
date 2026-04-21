@@ -1,4 +1,4 @@
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiArrowUp, FiPhoneOff, FiSun, FiMoon } from "react-icons/fi";
+import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiArrowUp, FiPhoneOff } from "react-icons/fi";
 import ControlButton from "./ControlButton";
 
 function ControlsBar({
@@ -12,8 +12,6 @@ function ControlsBar({
   onEndCall,
   onOpenPanel,
   panelOpen,
-  isDarkTheme,
-  onToggleTheme,
 }) {
   return (
     <footer className="bottom-bar">
@@ -47,10 +45,6 @@ function ControlsBar({
 
       <ControlButton onClick={onOpenPanel} tooltip="Details" className={panelOpen ? "active" : ""}>
         💬
-      </ControlButton>
-
-      <ControlButton onClick={onToggleTheme} tooltip={isDarkTheme ? "Light mode" : "Dark mode"}>
-        {isDarkTheme ? <FiMoon size={20} /> : <FiSun size={20} />}
       </ControlButton>
 
       <ControlButton variant="danger" tooltip="End call" onClick={onEndCall} className="end-btn-action">

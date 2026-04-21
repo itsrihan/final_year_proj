@@ -93,8 +93,6 @@ function MeetingLayout({
         onEndCall={() => {}}
         onOpenPanel={() => setPanelOpen(!panelOpen)}
         panelOpen={panelOpen}
-        isDarkTheme={theme === "dark"}
-        onToggleTheme={onThemeToggle}
       />
 
       <canvas ref={canvasRef} style={{ display: "none" }} />
