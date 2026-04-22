@@ -1,3 +1,130 @@
+/* ===== SECONDARY VIDEO WINDOW (SECOND PARTICIPANT) ===== */
+.secondary-video-window {
+  position: absolute;
+  bottom: 80px;
+  right: 16px;
+  width: 260px;
+  min-height: 200px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+  box-shadow: var(--shadow-md);
+  animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.secondary-video-window.pinned {
+  box-shadow: 0 0 16px rgba(91, 155, 248, 0.25);
+  border-color: rgba(91, 155, 248, 0.4);
+}
+
+.video-window-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.participant-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pin-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pin-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+html[data-theme="light"] .pin-toggle:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.pin-toggle:active {
+  transform: scale(0.92);
+}
+
+.secondary-video-window.pinned .pin-toggle {
+  background: rgba(91, 155, 248, 0.12);
+  border-color: rgba(91, 155, 248, 0.35);
+  color: var(--accent-primary);
+}
+
+.video-window-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  min-height: 140px;
+}
+
+.participant-video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.video-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-light) 0%, rgba(91, 155, 248, 0.12) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--accent-primary);
+}
+
+.participant-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.online {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+}
+
+.status-text {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
 /* ===== FLOATING MEETING INFO ===== */
 .floating-meeting-info {
   position: absolute;

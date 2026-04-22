@@ -32,7 +32,7 @@ function ControlsBar({
 
       <ControlButton
         onClick={onToggleAsl}
-        tooltip={aslEnabled ? "Disable ASL (I love you)" : "Enable ASL"}
+        tooltip={aslEnabled ? "Disable ASL" : "Enable ASL"}
         className={aslEnabled ? "active" : ""}
       >
         🤟

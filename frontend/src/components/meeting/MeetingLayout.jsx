@@ -3,6 +3,7 @@ import { FiMoon, FiSun } from "react-icons/fi";
 import ControlsBar from "./ControlsBar";
 import MeetingVideoStage from "./MeetingVideoStage";
 import SidePanel from "./SidePanel";
+import FloatingParticipant from "./FloatingParticipant";
 
 function MeetingLayout({
   videoRef,
@@ -73,14 +74,8 @@ function MeetingLayout({
         </div>
       </div>
 
-      {/* Floating other participant */}
-      <div className="floating-person other">
-        <div className="person-avatar-float">A</div>
-        <div className="person-info-float">
-          <div className="person-name-float">Alex</div>
-          <div className="status-dot online" />
-        </div>
-      </div>
+      {/* Secondary participant - hidden when panel open */}
+      <FloatingParticipant visible={!panelOpen} name="Alex" initial="A" />
 
       <ControlsBar
         micOn={micOn}

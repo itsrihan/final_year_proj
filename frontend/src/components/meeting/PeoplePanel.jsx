@@ -1,5 +1,4 @@
 const people = [
-  { initial: "Y", name: "You", meta: "Presenter" },
   { initial: "A", name: "Alex", meta: "Participant" },
 ];
 
