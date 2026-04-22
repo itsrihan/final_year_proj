@@ -1,4 +1,5 @@
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiArrowUp, FiPhoneOff } from "react-icons/fi";
+import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff } from "react-icons/fi";
+import { MdPanTool } from "react-icons/md";
 import ControlButton from "./ControlButton";
 
 function ControlsBar({
@@ -36,11 +37,11 @@ function ControlsBar({
         tooltip={aslEnabled ? "Disable ASL recognition" : "Enable ASL recognition"}
         className={aslEnabled ? "active" : ""}
       >
-        🤟
+        <MdPanTool size={20} />
       </ControlButton>
 
       <ControlButton onClick={onToggleHandRaise} tooltip="Raise hand">
-        <FiArrowUp size={20} />
+        ✋
       </ControlButton>
 
       <ControlButton onClick={onOpenPanel} tooltip="Details" className={panelOpen ? "active" : ""}>
