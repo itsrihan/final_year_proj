@@ -86,6 +86,15 @@ export function useAslStream() {
     };
 
     const connectWebSocket = () => {
+      // Don't create a new socket if one is already open or connecting
+      if (
+        socketRef.current &&
+        (socketRef.current.readyState === WebSocket.OPEN ||
+          socketRef.current.readyState === WebSocket.CONNECTING)
+      ) {
+        return;
+      }
+
       const socket = new WebSocket(WS_URL);
       socketRef.current = socket;
 
@@ -122,8 +131,12 @@ export function useAslStream() {
       detachVideoElement(videoRef.current);
       setMediaStream(null);
 
-      if (socketRef.current) {
-        socketRef.current.close();
+      const sock = socketRef.current;
+      if (sock) {
+        // Only close if fully open — avoid killing mid-handshake
+        if (sock.readyState === WebSocket.OPEN) {
+          sock.close();
+        }
         socketRef.current = null;
       }
     };

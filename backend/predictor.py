@@ -211,6 +211,8 @@ class PhrasePredictor:
         data_dir="data/phrases",
     ):
         self.model, self.index_to_label = load_phrase_assets(model_path, labels_path, data_dir)
+        # Wrap model in tf.function for CPU inference speedup (Fix 1)
+        self._predict_fn = tf.function(self.model, reduce_retracing=True)
 
         self.sequence = []
         self.last_label = "Waiting..."
@@ -218,9 +220,11 @@ class PhrasePredictor:
 
         self.missing_frames = 0
         self.frames_since_last_predict = 0
+        self.cooldown_frames = 0  # Bug 2: cooldown after confident prediction
+        self.cooldown_duration = 20  # frames to wait before predicting again
 
-        self.min_frames_to_predict = min(24, FRAMES)
-        self.predict_every_n_frames = 2
+        self.min_frames_to_predict = 10  # Reduced from 24 (Fix 3)
+        self.predict_every_n_frames = 4  # Increased from 2 (Fix 3)
         self.missing_grace_frames = 12
         self.stable_threshold = THRESHOLD
 
@@ -255,12 +259,21 @@ class PhrasePredictor:
         return normalized
 
     def predict(self, mp_bundle, hands_detected=True):
+        """Predict phrase from hand landmarks with improved hand-off behavior (Fix 5)."""
         if hands_detected:
             self.missing_frames = 0
-
             keypoints = self.extract_keypoints(mp_bundle)
             self.sequence.append(keypoints)
             self.sequence = self.sequence[-FRAMES:]
+
+            # Cooldown: wait after a confident prediction before predicting again (Bug 2)
+            if self.cooldown_frames > 0:
+                self.cooldown_frames -= 1
+                if self.cooldown_frames == 0:
+                    # Ready for next sign — clear display (Bug 3)
+                    self.last_label = "Waiting..."
+                    self.last_confidence = 0.0
+                return self.last_label, self.last_confidence
 
             if len(self.sequence) < self.min_frames_to_predict:
                 return "Waiting...", 0.0
@@ -276,7 +289,8 @@ class PhrasePredictor:
                 return self.last_label, self.last_confidence
 
             input_data = np.expand_dims(input_sequence, axis=0)
-            res = self.model.predict(input_data, verbose=0)[0]
+            # Use tf.function for 3-10x faster CPU inference (Fix 1)
+            res = self._predict_fn(input_data, training=False).numpy()[0]
 
             predicted_index = int(np.argmax(res))
             confidence = float(res[predicted_index])
@@ -285,16 +299,40 @@ class PhrasePredictor:
             if confidence >= self.stable_threshold:
                 self.last_label = label
                 self.last_confidence = confidence
+                # Flush sequence + start cooldown so next sign starts fresh (Bug 2)
+                self.sequence = []
+                self.frames_since_last_predict = 0
+                self.cooldown_frames = self.cooldown_duration
                 return label, confidence
 
             return self.last_label, self.last_confidence
 
+        # --- Hand is missing ---
         self.missing_frames += 1
 
+        # Grace window: reuse last known good prediction
         if self.missing_frames <= self.missing_grace_frames:
             return self.last_label, self.last_confidence
 
-        self.reset()
+        # Hand has been gone long enough — try one final prediction
+        # from whatever sequence we have buffered, then reset
+        if self.sequence:
+            input_sequence = self._build_input_sequence()
+            if input_sequence is not None:
+                input_data = np.expand_dims(input_sequence, axis=0)
+                res = self._predict_fn(input_data, training=False).numpy()[0]
+                predicted_index = int(np.argmax(res))
+                confidence = float(res[predicted_index])
+                label = self.index_to_label.get(predicted_index, "Unknown")
+                if confidence >= self.stable_threshold:
+                    self.last_label = label
+                    self.last_confidence = confidence
+
+        # Soft reset — keep label visible but clear sequence
+        self.sequence = []
+        self.missing_frames = 0
+        self.frames_since_last_predict = 0
+        # Don't wipe last_label/confidence — let frontend fade it out
         return self.last_label, self.last_confidence
 
     def reset(self):

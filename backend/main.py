@@ -4,6 +4,7 @@ import json
 import cv2
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
 from predictor import PhrasePredictor
@@ -80,8 +81,9 @@ async def asl_socket(websocket: WebSocket):
                 continue
 
             frame = cv2.flip(frame, 1)
+            
+            # Always process frame — always use MediaPipe result (Bug 1 fix)
             mp_bundle = extractor.process_frame(frame)
-
             hands_detected = bool(
                 mp_bundle.hands_results
                 and mp_bundle.hands_results.multi_hand_landmarks
@@ -92,9 +94,11 @@ async def asl_socket(websocket: WebSocket):
                 confidence = 0.0
                 status = "ASL off"
             else:
-                detected_text, confidence = predictor.predict(
+                # Run prediction in thread pool to avoid blocking WebSocket (Fix 2)
+                detected_text, confidence = await run_in_threadpool(
+                    predictor.predict,
                     mp_bundle,
-                    hands_detected=hands_detected
+                    hands_detected
                 )
 
                 if hands_detected:
