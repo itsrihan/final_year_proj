@@ -1,3 +1,5 @@
+import { FiVideoOff } from "react-icons/fi";
+
 function MeetingVideoStage({
   videoRef,
   cameraOn,
@@ -20,7 +22,7 @@ function MeetingVideoStage({
             />
           ) : (
             <div className="camera-off-state">
-              <div className="camera-off-icon">📷</div>
+              <FiVideoOff className="camera-off-icon" />
               <div>Camera is turned off</div>
             </div>
           )}

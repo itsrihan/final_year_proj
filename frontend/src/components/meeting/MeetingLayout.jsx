@@ -89,7 +89,6 @@ function MeetingLayout({
         onToggleMic={onToggleMic}
         onToggleCamera={onToggleCamera}
         onToggleAsl={onToggleAsl}
-        onToggleHandRaise={() => {}}
         onEndCall={() => {}}
         onOpenPanel={() => setPanelOpen(!panelOpen)}
         panelOpen={panelOpen}
