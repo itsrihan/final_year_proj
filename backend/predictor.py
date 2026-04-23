@@ -10,6 +10,14 @@ from tensorflow.keras.models import load_model
 from core.config import FEATURES_PER_FRAME, FRAMES, THRESHOLD
 from core.landmarks import MediaPipeBundle
 
+# GPU Configuration
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    tf.config.experimental.set_memory_growth(gpus[0], True)
+    print(f"[INFO] Using GPU: {gpus[0]}")
+else:
+    print("[WARN] No GPU found, falling back to CPU")
+
 
 def _is_valid_artifact(path):
     return os.path.exists(path) and os.path.getsize(path) > 0
@@ -193,14 +201,28 @@ def load_phrase_assets(
     if _is_valid_artifact(model_path) and label_map:
         try:
             model = _try_load_model(model_path)
+            # Warm up model for optimal GPU performance
+            dummy = np.zeros((1, FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
+            model(dummy, training=False)
+            print("[INFO] Model warmed up")
             return model, {index: label for label, index in label_map.items()}
         except Exception as e:
             print(f"[WARN] Existing model could not be loaded: {e}")
             print("[INFO] Rebuilding model from local phrase data...")
-            return _train_phrase_model(model_path, labels_path, data_dir)
+            model, label_index_map = _train_phrase_model(model_path, labels_path, data_dir)
+            # Warm up newly trained model
+            dummy = np.zeros((1, FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
+            model(dummy, training=False)
+            print("[INFO] Model warmed up")
+            return model, label_index_map
 
     print("[INFO] Existing model or labels missing. Training a fresh model...")
-    return _train_phrase_model(model_path, labels_path, data_dir)
+    model, label_index_map = _train_phrase_model(model_path, labels_path, data_dir)
+    # Warm up newly trained model
+    dummy = np.zeros((1, FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
+    model(dummy, training=False)
+    print("[INFO] Model warmed up")
+    return model, label_index_map
 
 
 class PhrasePredictor:
