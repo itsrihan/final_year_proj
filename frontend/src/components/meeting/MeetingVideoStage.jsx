@@ -7,9 +7,12 @@ function MeetingVideoStage({
   showCaptions,
   prediction,
   confidence,
+  translationWords,
 }) {
+  const trayVisible = aslEnabled && showCaptions;
+
   return (
-    <section className="video-area">
+    <section className={`video-area ${trayVisible ? "asl-tray-open" : ""}`}>
       <div className="main-video-container">
         <div className="video-frame">
           {cameraOn ? (
@@ -36,6 +39,29 @@ function MeetingVideoStage({
               <div className="asl-overlay-confidence">
                 Confidence: {confidence.toFixed(2)}
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={`translation-tray ${trayVisible ? "visible" : ""}`}>
+        <div className="translation-tray-header">
+          <div className="translation-tray-title">Live Translation</div>
+          <div className="translation-tray-subtitle">
+            Words appear here as they are confirmed.
+          </div>
+        </div>
+
+        <div className="translation-word-list">
+          {translationWords.length > 0 ? (
+            translationWords.map((word, index) => (
+              <span key={`${word}-${index}`} className="translation-word-chip">
+                {word}
+              </span>
+            ))
+          ) : (
+            <div className="translation-empty-state">
+              Start signing to build your translated phrase.
             </div>
           )}
         </div>

@@ -25,13 +25,14 @@ function App() {
     prediction,
     confidence,
     handsCount,
+    translationWords,
     modelName,
     inferenceDevice,
     inferenceMode,
     status,
     timeNow,
     setMicOn,
-    setAslEnabled,
+    toggleAsl,
     setShowCaptions,
     setActiveTab,
     toggleCamera,
@@ -50,6 +51,7 @@ function App() {
       prediction={prediction}
       confidence={confidence}
       handsCount={handsCount}
+      translationWords={translationWords}
       modelName={modelName}
       inferenceDevice={inferenceDevice}
       inferenceMode={inferenceMode}
@@ -58,7 +60,7 @@ function App() {
       onToggleMic={() => setMicOn((prev) => !prev)}
       onToggleCamera={toggleCamera}
       onToggleCaptions={() => setShowCaptions((prev) => !prev)}
-      onToggleAsl={() => setAslEnabled((prev) => !prev)}
+      onToggleAsl={toggleAsl}
       onSetActiveTab={setActiveTab}
       theme={theme}
       onThemeToggle={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}

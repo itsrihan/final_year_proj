@@ -17,6 +17,7 @@ function MeetingLayout({
   prediction,
   confidence,
   handsCount,
+  translationWords,
   modelName,
   inferenceDevice,
   inferenceMode,
@@ -42,6 +43,7 @@ function MeetingLayout({
           showCaptions={showCaptions}
           prediction={prediction}
           confidence={confidence}
+          translationWords={translationWords}
         />
 
         {panelOpen && (

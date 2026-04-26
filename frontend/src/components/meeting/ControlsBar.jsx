@@ -1,4 +1,12 @@
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff } from "react-icons/fi";
+import {
+  FiMic,
+  FiMicOff,
+  FiVideo,
+  FiVideoOff,
+  FiPhoneOff,
+  FiGlobe,
+  FiMessageCircle,
+} from "react-icons/fi";
 import ControlButton from "./ControlButton";
 
 function ControlsBar({
@@ -35,11 +43,11 @@ function ControlsBar({
         tooltip={aslEnabled ? "Disable ASL" : "Enable ASL"}
         className={aslEnabled ? "active" : ""}
       >
-        🤟
+        <FiGlobe size={20} />
       </ControlButton>
 
       <ControlButton onClick={onOpenPanel} tooltip="Chat" className={panelOpen ? "active" : ""}>
-        💬
+        <FiMessageCircle size={20} />
       </ControlButton>
 
       <ControlButton variant="danger" tooltip="End call" onClick={onEndCall} className="end-btn-action">
