@@ -1,4 +1,14 @@
-function CaptionsPanel({ aslEnabled, showCaptions, prediction, status, confidence }) {
+function CaptionsPanel({
+  aslEnabled,
+  showCaptions,
+  prediction,
+  status,
+  confidence,
+  handsCount,
+  modelName,
+  inferenceDevice,
+  inferenceMode,
+}) {
   return (
     <div className="panel-content">
       <div className="status-chip">
@@ -18,6 +28,26 @@ function CaptionsPanel({ aslEnabled, showCaptions, prediction, status, confidenc
       <div className="info-box">
         <div className="info-label">Confidence</div>
         <div className="info-value small">{confidence.toFixed(2)}</div>
+      </div>
+
+      <div className="info-box">
+        <div className="info-label">Hands detected (frame)</div>
+        <div className="info-value small">{handsCount}</div>
+      </div>
+
+      <div className="info-box">
+        <div className="info-label">model name</div>
+        <div className="info-value small">{modelName}</div>
+      </div>
+
+      <div className="info-box">
+        <div className="info-label">Inference device</div>
+        <div className="info-value small">{inferenceDevice}</div>
+      </div>
+
+      <div className="info-box">
+        <div className="info-label">Inference mode</div>
+        <div className="info-value small">{inferenceMode}</div>
       </div>
 
       <div className="helper-text">

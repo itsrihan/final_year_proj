@@ -1,5 +1,7 @@
 # backend/core/config.py
 
+import os
+
 FRAMES = 24
 
 # Confidence threshold will matter later during prediction
@@ -44,3 +46,11 @@ POSE_FEATURES = len(POSE_LANDMARKS) * 4  # x, y, z, visibility
 FACE_FEATURES = len(FACE_LANDMARKS) * 3  # x, y, z
 
 FEATURES_PER_FRAME = TOTAL_HAND_FEATURES + POSE_FEATURES + FACE_FEATURES
+
+# Centralized backend paths for model artifacts and phrase dataset.
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+
+PHRASE_MODEL_PATH = os.path.join(BACKEND_DIR, "models", "phrase_lstm_og.keras")
+PHRASE_LABELS_PATH = os.path.join(BACKEND_DIR, "models", "phrase_labels.json")
+PHRASE_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "phrases")

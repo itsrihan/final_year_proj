@@ -6,7 +6,17 @@ import {
   stopMediaStream,
 } from "./mediaStreamUtils";
 
-const WS_URL = "ws://localhost:8000/ws/asl";
+const WS_URL_OVERRIDE = import.meta.env.VITE_WS_URL;
+
+function getWsUrl() {
+  if (WS_URL_OVERRIDE) {
+    return WS_URL_OVERRIDE;
+  }
+
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const host = window.location.hostname || "localhost";
+  return `${protocol}://${host}:8000/ws/asl`;
+}
 
 const CAMERA_CONSTRAINTS = {
   video: {
@@ -23,6 +33,8 @@ export function useAslStream() {
   const canvasRef = useRef(null);
   const socketRef = useRef(null);
   const streamRef = useRef(null);
+  const reconnectTimerRef = useRef(null);
+  const shouldReconnectRef = useRef(true);
 
   const [mediaStream, setMediaStream] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -33,6 +45,10 @@ export function useAslStream() {
   const [activeTab, setActiveTab] = useState("captions");
   const [prediction, setPrediction] = useState("Waiting...");
   const [confidence, setConfidence] = useState(0);
+  const [handsCount, setHandsCount] = useState(0);
+  const [modelName, setModelName] = useState("unknown");
+  const [inferenceDevice, setInferenceDevice] = useState("unknown");
+  const [inferenceMode, setInferenceMode] = useState("idle");
   const [status, setStatus] = useState("Starting...");
   const [timeNow, setTimeNow] = useState("");
 
@@ -95,8 +111,9 @@ export function useAslStream() {
         return;
       }
 
-      const socket = new WebSocket(WS_URL);
+      const socket = new WebSocket(getWsUrl());
       socketRef.current = socket;
+      setStatus("Connecting to backend...");
 
       socket.onopen = () => {
         setConnected(true);
@@ -104,10 +121,19 @@ export function useAslStream() {
       };
 
       socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setPrediction(data.text || "Waiting...");
-        setConfidence(data.confidence || 0);
-        setStatus(data.status || "Idle");
+        try {
+          const data = JSON.parse(event.data);
+          setPrediction(data.text || "Waiting...");
+          setConfidence(data.confidence || 0);
+          setHandsCount(Number.isInteger(data.hands_count) ? data.hands_count : 0);
+          setModelName(data.model_name || "unknown");
+          setInferenceDevice(data.inference_device || "unknown");
+          setInferenceMode(data.inference_mode || "unknown");
+          setStatus(data.status || "Idle");
+        } catch (error) {
+          console.error("WebSocket message parse error:", error);
+          setStatus("Invalid backend message");
+        }
       };
 
       socket.onerror = () => {
@@ -117,7 +143,17 @@ export function useAslStream() {
 
       socket.onclose = () => {
         setConnected(false);
-        setStatus("Backend disconnected");
+        if (!shouldReconnectRef.current) {
+          setStatus("Backend disconnected");
+          return;
+        }
+
+        setStatus("Reconnecting backend...");
+        if (reconnectTimerRef.current) {
+          clearTimeout(reconnectTimerRef.current);
+        }
+
+        reconnectTimerRef.current = setTimeout(connectWebSocket, 1200);
       };
     };
 
@@ -126,6 +162,13 @@ export function useAslStream() {
 
     return () => {
       mounted = false;
+      shouldReconnectRef.current = false;
+
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+
       stopMediaStream(streamRef.current);
       streamRef.current = null;
       detachVideoElement(videoRef.current);
@@ -133,8 +176,7 @@ export function useAslStream() {
 
       const sock = socketRef.current;
       if (sock) {
-        // Only close if fully open — avoid killing mid-handshake
-        if (sock.readyState === WebSocket.OPEN) {
+        if (sock.readyState === WebSocket.OPEN || sock.readyState === WebSocket.CONNECTING) {
           sock.close();
         }
         socketRef.current = null;
@@ -156,7 +198,7 @@ export function useAslStream() {
 
       if (!video.videoWidth || !video.videoHeight) return;
 
-      const targetWidth = 640;
+      const targetWidth = 960;
       const targetHeight = Math.round((video.videoHeight / video.videoWidth) * targetWidth);
 
       canvas.width = targetWidth;
@@ -164,7 +206,7 @@ export function useAslStream() {
 
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const frame = canvas.toDataURL("image/jpeg", 0.7);
+      const frame = canvas.toDataURL("image/jpeg", 0.9);
 
       socketRef.current.send(
         JSON.stringify({
@@ -206,6 +248,10 @@ export function useAslStream() {
       setStatus("Camera off");
       setPrediction("Waiting...");
       setConfidence(0);
+      setHandsCount(0);
+      setModelName("unknown");
+      setInferenceDevice("idle");
+      setInferenceMode("camera-off");
       return;
     }
 
@@ -223,6 +269,10 @@ export function useAslStream() {
     activeTab,
     prediction,
     confidence,
+    handsCount,
+    modelName,
+    inferenceDevice,
+    inferenceMode,
     status,
     timeNow,
     setMicOn,

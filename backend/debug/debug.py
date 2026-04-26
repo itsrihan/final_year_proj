@@ -21,12 +21,33 @@ from core.drawing import (
 from core.landmarks import LandmarkExtractor
 
 
-def main():
-    cap = cv2.VideoCapture(0)
+def open_camera():
+    indices_to_try = [0, 1, 2, 3]
+    candidates = []
 
-    if not cap.isOpened():
+    # Prefer DirectShow on Windows for more reliable webcam open/read behavior.
+    if os.name == "nt":
+        candidates.extend((idx, cv2.CAP_DSHOW) for idx in indices_to_try)
+
+    candidates.extend((idx, None) for idx in indices_to_try)
+
+    for idx, backend in candidates:
+        cap = cv2.VideoCapture(idx, backend) if backend is not None else cv2.VideoCapture(idx)
+        if cap.isOpened():
+            return cap, idx
+        cap.release()
+
+    return None, None
+
+
+def main():
+    cap, camera_index = open_camera()
+
+    if cap is None:
         print("Could not open webcam.")
         return
+
+    print(f"Using webcam index: {camera_index}")
 
     extractor = LandmarkExtractor()
 

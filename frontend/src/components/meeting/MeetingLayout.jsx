@@ -16,6 +16,10 @@ function MeetingLayout({
   activeTab,
   prediction,
   confidence,
+  handsCount,
+  modelName,
+  inferenceDevice,
+  inferenceMode,
   status,
   timeNow,
   onToggleMic,
@@ -47,6 +51,10 @@ function MeetingLayout({
             showCaptions={showCaptions}
             prediction={prediction}
             confidence={confidence}
+            handsCount={handsCount}
+            modelName={modelName}
+            inferenceDevice={inferenceDevice}
+            inferenceMode={inferenceMode}
             status={status}
             onSetActiveTab={onSetActiveTab}
             onClose={() => setPanelOpen(false)}

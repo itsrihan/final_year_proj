@@ -9,6 +9,10 @@ function SidePanel({
   showCaptions,
   prediction,
   confidence,
+  handsCount,
+  modelName,
+  inferenceDevice,
+  inferenceMode,
   status,
   onSetActiveTab,
   onClose,
@@ -26,6 +30,10 @@ function SidePanel({
           showCaptions={showCaptions}
           prediction={prediction}
           confidence={confidence}
+          handsCount={handsCount}
+          modelName={modelName}
+          inferenceDevice={inferenceDevice}
+          inferenceMode={inferenceMode}
           status={status}
         />
       )}

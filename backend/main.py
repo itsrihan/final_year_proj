@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 
 import cv2
 import numpy as np
@@ -8,7 +9,10 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 
 from predictor import PhrasePredictor
+from core.config import PHRASE_DATA_DIR, PHRASE_LABELS_PATH, PHRASE_MODEL_PATH
 from core.landmarks import LandmarkExtractor
+
+MODEL_FILE_NAME = os.path.basename(PHRASE_MODEL_PATH)
 
 app = FastAPI()
 
@@ -24,11 +28,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-MODEL_PATH = "models/phrase_lstm.keras"
-LABELS_PATH = "models/phrase_labels.json"
-DATA_PATH = "data/phrases"
-
 
 @app.get("/")
 def root():
@@ -52,7 +51,18 @@ async def asl_socket(websocket: WebSocket):
     await websocket.accept()
 
     extractor = LandmarkExtractor()
-    predictor = PhrasePredictor(MODEL_PATH, LABELS_PATH, DATA_PATH)
+    predictor = None
+    predictor_error = None
+
+    try:
+        predictor = PhrasePredictor(
+            PHRASE_MODEL_PATH,
+            PHRASE_LABELS_PATH,
+            PHRASE_DATA_DIR,
+        )
+    except Exception as error:
+        predictor_error = str(error)
+        print(f"[WARN] Predictor unavailable: {predictor_error}")
 
     try:
         while True:
@@ -66,7 +76,8 @@ async def asl_socket(websocket: WebSocket):
                 await websocket.send_text(json.dumps({
                     "text": "No frame received",
                     "confidence": 0.0,
-                    "status": "idle"
+                    "status": "idle",
+                    "model_name": MODEL_FILE_NAME,
                 }))
                 continue
 
@@ -76,7 +87,8 @@ async def asl_socket(websocket: WebSocket):
                 await websocket.send_text(json.dumps({
                     "text": "Invalid frame",
                     "confidence": 0.0,
-                    "status": "error"
+                    "status": "error",
+                    "model_name": MODEL_FILE_NAME,
                 }))
                 continue
 
@@ -84,6 +96,14 @@ async def asl_socket(websocket: WebSocket):
             
             # Always process frame — always use MediaPipe result (Bug 1 fix)
             mp_bundle = extractor.process_frame(frame)
+            hands_count = (
+                len(mp_bundle.hands_results.multi_hand_landmarks)
+                if (
+                    mp_bundle.hands_results
+                    and mp_bundle.hands_results.multi_hand_landmarks
+                )
+                else 0
+            )
             hands_detected = bool(
                 mp_bundle.hands_results
                 and mp_bundle.hands_results.multi_hand_landmarks
@@ -93,6 +113,17 @@ async def asl_socket(websocket: WebSocket):
                 detected_text = "ASL off"
                 confidence = 0.0
                 status = "ASL off"
+                inference_device = "idle"
+                inference_mode = "asl-off"
+            elif predictor is None:
+                detected_text = "Model unavailable"
+                confidence = 0.0
+                if hands_detected:
+                    status = "ASL on | hand detected | predictor unavailable"
+                else:
+                    status = "ASL on | no hand | predictor unavailable"
+                inference_device = "unavailable"
+                inference_mode = "predictor-unavailable"
             else:
                 # Run prediction in thread pool to avoid blocking WebSocket (Fix 2)
                 detected_text, confidence = await run_in_threadpool(
@@ -100,6 +131,9 @@ async def asl_socket(websocket: WebSocket):
                     mp_bundle,
                     hands_detected
                 )
+                telemetry = predictor.get_last_inference_telemetry()
+                inference_device = telemetry.get("inference_device", "unknown")
+                inference_mode = telemetry.get("inference_mode", "unknown")
 
                 if hands_detected:
                     status = "ASL on | hand detected"
@@ -110,7 +144,13 @@ async def asl_socket(websocket: WebSocket):
                 "text": detected_text,
                 "confidence": round(confidence, 4),
                 "status": status,
-                "hands_detected": hands_detected
+                "model_name": MODEL_FILE_NAME,
+                "hands_detected": hands_detected,
+                "hands_count": hands_count,
+                "predictor_ready": predictor is not None,
+                "predictor_error": predictor_error,
+                "inference_device": inference_device,
+                "inference_mode": inference_mode,
             }))
 
     except WebSocketDisconnect:
@@ -126,4 +166,5 @@ async def asl_socket(websocket: WebSocket):
             pass
     finally:
         extractor.close()
-        predictor.close()
+        if predictor is not None:
+            predictor.close()

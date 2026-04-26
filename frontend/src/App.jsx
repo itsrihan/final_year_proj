@@ -24,6 +24,10 @@ function App() {
     activeTab,
     prediction,
     confidence,
+    handsCount,
+    modelName,
+    inferenceDevice,
+    inferenceMode,
     status,
     timeNow,
     setMicOn,
@@ -45,6 +49,10 @@ function App() {
       activeTab={activeTab}
       prediction={prediction}
       confidence={confidence}
+      handsCount={handsCount}
+      modelName={modelName}
+      inferenceDevice={inferenceDevice}
+      inferenceMode={inferenceMode}
       status={status}
       timeNow={timeNow}
       onToggleMic={() => setMicOn((prev) => !prev)}

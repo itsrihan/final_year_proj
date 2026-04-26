@@ -5,6 +5,10 @@ py -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 for debug: (in venv) python debug\debug_capture.py
 
+for venv in linux: source ~/asl_venv/bin/activate
+
+
+
 
 
 # data collection

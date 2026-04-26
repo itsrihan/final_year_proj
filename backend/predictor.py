@@ -7,7 +7,14 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
-from core.config import FEATURES_PER_FRAME, FRAMES, THRESHOLD
+from core.config import (
+    FEATURES_PER_FRAME,
+    FRAMES,
+    PHRASE_DATA_DIR,
+    PHRASE_LABELS_PATH,
+    PHRASE_MODEL_PATH,
+    THRESHOLD,
+)
 from core.landmarks import MediaPipeBundle
 
 # GPU Configuration
@@ -17,6 +24,23 @@ if gpus:
     print(f"[INFO] Using GPU: {gpus[0]}")
 else:
     print("[WARN] No GPU found, falling back to CPU")
+
+
+def _is_cudnn_backend_error(error):
+    message = str(error)
+    return "CudnnRNNV3" in message or "Dnn is not supported" in message
+
+
+def _format_device_name(device_name):
+    if not device_name:
+        return "unknown"
+
+    marker = "/device/"
+    index = device_name.lower().find(marker)
+    if index >= 0:
+        return device_name[index + len(marker):].upper()
+
+    return device_name.upper()
 
 
 def _is_valid_artifact(path):
@@ -192,9 +216,9 @@ def _try_load_model(model_path):
 
 @lru_cache(maxsize=1)
 def load_phrase_assets(
-    model_path="models/phrase_lstm.keras",
-    labels_path="models/phrase_labels.json",
-    data_dir="data/phrases",
+    model_path=PHRASE_MODEL_PATH,
+    labels_path=PHRASE_LABELS_PATH,
+    data_dir=PHRASE_DATA_DIR,
 ):
     label_map = _load_label_map(labels_path)
 
@@ -228,9 +252,9 @@ def load_phrase_assets(
 class PhrasePredictor:
     def __init__(
         self,
-        model_path="models/phrase_lstm.keras",
-        labels_path="models/phrase_labels.json",
-        data_dir="data/phrases",
+        model_path=PHRASE_MODEL_PATH,
+        labels_path=PHRASE_LABELS_PATH,
+        data_dir=PHRASE_DATA_DIR,
     ):
         self.model, self.index_to_label = load_phrase_assets(model_path, labels_path, data_dir)
         # Wrap model in tf.function for CPU inference speedup (Fix 1)
@@ -249,6 +273,33 @@ class PhrasePredictor:
         self.predict_every_n_frames = 4  # Increased from 2 (Fix 3)
         self.missing_grace_frames = 12
         self.stable_threshold = THRESHOLD
+        self.last_inference_device = "not-run"
+        self.last_inference_mode = "idle"
+
+    def _run_inference(self, input_data):
+        try:
+            output = self._predict_fn(input_data, training=False)
+            self.last_inference_device = _format_device_name(getattr(output, "device", ""))
+            self.last_inference_mode = "tf-function"
+            return output.numpy()[0]
+        except Exception as error:
+            if not _is_cudnn_backend_error(error):
+                raise
+
+            # WSL environments can expose GPU but miss required cuDNN kernels.
+            # Retry on CPU so recognition remains functional.
+            with tf.device("/CPU:0"):
+                output = self.model(input_data, training=False)
+
+            self.last_inference_device = _format_device_name(getattr(output, "device", ""))
+            self.last_inference_mode = "cpu-fallback"
+            return output.numpy()[0]
+
+    def get_last_inference_telemetry(self):
+        return {
+            "inference_device": self.last_inference_device,
+            "inference_mode": self.last_inference_mode,
+        }
 
     def extract_keypoints(self, mp_bundle):
         if not isinstance(mp_bundle, MediaPipeBundle):
@@ -311,8 +362,8 @@ class PhrasePredictor:
                 return self.last_label, self.last_confidence
 
             input_data = np.expand_dims(input_sequence, axis=0)
-            # Use tf.function for 3-10x faster CPU inference (Fix 1)
-            res = self._predict_fn(input_data, training=False).numpy()[0]
+            # Use tf.function for fast-path; fallback to CPU on cuDNN runtime errors.
+            res = self._run_inference(input_data)
 
             predicted_index = int(np.argmax(res))
             confidence = float(res[predicted_index])
@@ -342,7 +393,7 @@ class PhrasePredictor:
             input_sequence = self._build_input_sequence()
             if input_sequence is not None:
                 input_data = np.expand_dims(input_sequence, axis=0)
-                res = self._predict_fn(input_data, training=False).numpy()[0]
+                res = self._run_inference(input_data)
                 predicted_index = int(np.argmax(res))
                 confidence = float(res[predicted_index])
                 label = self.index_to_label.get(predicted_index, "Unknown")
