@@ -4,6 +4,7 @@
 @import './global.css';
 @import './MeetingLayout.css';
 @import './MeetingVideoStage.css';
+@import "./LiveCaptionTray.css";
 @import './CaptionsPanel.css';
 @import './SidePanel.css';
 @import './PeoplePanel.css';

@@ -4,6 +4,7 @@ import ControlsBar from "./ControlsBar";
 import MeetingVideoStage from "./MeetingVideoStage";
 import SidePanel from "./SidePanel";
 import FloatingParticipant from "./FloatingParticipant";
+import LiveCaptionTray from "./LiveCaptionTray";
 
 function MeetingLayout({
   videoRef,
@@ -32,19 +33,26 @@ function MeetingLayout({
   onThemeToggle,
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
+  const captionOpen = aslEnabled && showCaptions;
 
   return (
     <div className="app" data-theme={theme}>
       <main className={`main-layout ${panelOpen ? "panel-open" : ""}`}>
-        <MeetingVideoStage
-          videoRef={videoRef}
-          cameraOn={cameraOn}
-          aslEnabled={aslEnabled}
-          showCaptions={showCaptions}
-          prediction={prediction}
-          confidence={confidence}
-          translationWords={translationWords}
-        />
+        <section className={`video-caption-layout ${captionOpen ? "caption-open" : ""}`}>
+          <MeetingVideoStage
+            videoRef={videoRef}
+            cameraOn={cameraOn}
+            aslEnabled={aslEnabled}
+            showCaptions={showCaptions}
+            prediction={prediction}
+            confidence={confidence}
+          />
+
+          <LiveCaptionTray
+            visible={captionOpen}
+            translationWords={translationWords}
+          />
+        </section>
 
         {panelOpen && (
           <SidePanel
@@ -64,7 +72,6 @@ function MeetingLayout({
         )}
       </main>
 
-      {/* Floating meeting info */}
       <div className="floating-meeting-info">
         <button className="theme-toggle-float" onClick={onThemeToggle} title="Toggle theme">
           {theme === "dark" ? <FiMoon size={18} /> : <FiSun size={18} />}
@@ -75,7 +82,6 @@ function MeetingLayout({
         </div>
       </div>
 
-      {/* Floating you indicator */}
       <div className="floating-person you">
         <div className="person-avatar-float">Y</div>
         <div className="person-info-float">
@@ -84,7 +90,6 @@ function MeetingLayout({
         </div>
       </div>
 
-      {/* Secondary participant - hidden when panel open */}
       <FloatingParticipant visible={!panelOpen} name="Alex" initial="A" />
 
       <ControlsBar
