@@ -50,3 +50,5 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+data/
