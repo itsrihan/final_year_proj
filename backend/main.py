@@ -96,6 +96,18 @@ async def asl_socket(websocket: WebSocket):
             
             # Always process frame — always use MediaPipe result (Bug 1 fix)
             mp_bundle = extractor.process_frame(frame)
+
+            features = extractor.extract_features(mp_bundle)
+
+            print(
+                "features:",
+                "shape=", features.shape,
+                "nonzero=", int(np.count_nonzero(features)),
+                "min=", round(float(features.min()), 4),
+                "max=", round(float(features.max()), 4),
+                "mean=", round(float(features.mean()), 4),
+            )
+            
             hands_count = (
                 len(mp_bundle.hands_results.multi_hand_landmarks)
                 if (

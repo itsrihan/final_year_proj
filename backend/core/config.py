@@ -5,7 +5,7 @@ import os
 FRAMES = 24
 
 # Confidence threshold will matter later during prediction
-THRESHOLD = 0.70
+THRESHOLD = 0.50
 
 # Pose landmarks we actually care about
 POSE_LANDMARKS = {
@@ -51,6 +51,6 @@ FEATURES_PER_FRAME = TOTAL_HAND_FEATURES + POSE_FEATURES + FACE_FEATURES
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
 
-PHRASE_MODEL_PATH = os.path.join(BACKEND_DIR, "models", "phrase_lstm_og.keras")
+PHRASE_MODEL_PATH = os.path.join(BACKEND_DIR, "models", "phrase_lstm.keras")
 PHRASE_LABELS_PATH = os.path.join(BACKEND_DIR, "models", "phrase_labels.json")
 PHRASE_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "phrases")

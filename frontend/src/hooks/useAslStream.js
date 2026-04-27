@@ -118,14 +118,15 @@ export function useAslStream() {
           setConfidence(confidenceValue);
           setHandsCount(handsValue);
 
-          if (
-            text &&
-            text !== "Waiting..." &&
-            text !== "ASL off" &&
-            text !== "Model unavailable" &&
-            confidenceValue > 0 &&
-            text !== lastCommittedWordRef.current
-          ) {
+            if (
+              text &&
+              text !== "Waiting..." &&
+              text !== "null" &&
+              text !== "ASL off" &&
+              text !== "Model unavailable" &&
+              confidenceValue > 0 &&
+              text !== lastCommittedWordRef.current
+            ) {
             lastCommittedWordRef.current = text;
             setTranslationWords((currentWords) => {
               const nextWords = [...currentWords, text];
@@ -187,17 +188,17 @@ export function useAslStream() {
       const context = canvas.getContext("2d");
       if (!video.videoWidth || !video.videoHeight) return;
 
-      const targetWidth = 960;
+      const targetWidth = 640;
       const targetHeight = Math.round((video.videoHeight / video.videoWidth) * targetWidth);
       canvas.width = targetWidth;
       canvas.height = targetHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       socketRef.current.send(JSON.stringify({
-        frame: canvas.toDataURL("image/jpeg", 0.9),
+        frame: canvas.toDataURL("image/jpeg", 0.65),
         asl_enabled: aslEnabled,
       }));
-    }, 150);
+    }, 50);
 
     return () => clearInterval(interval);
   }, [cameraOn, aslEnabled]);

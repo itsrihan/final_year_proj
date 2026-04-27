@@ -272,6 +272,7 @@ def main():
             try:
                 display = collector.process_frame(frame)
             except Exception as e:
+                raise 
                 display = cv2.flip(frame, 1)
                 cv2.rectangle(display, (10, 10), (900, 80), (20, 20, 20), -1)
                 cv2.putText(
