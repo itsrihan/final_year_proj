@@ -11,6 +11,9 @@ mp_pose = mp.solutions.pose
 
 
 def draw_hands(image, hands_results):
+    if hands_results is None:
+        return
+
     if not hands_results.multi_hand_landmarks:
         return
 
@@ -23,6 +26,9 @@ def draw_hands(image, hands_results):
 
 
 def draw_pose_subset(image, pose_results):
+    if pose_results is None:
+        return
+
     if not pose_results.pose_landmarks:
         return
 
@@ -36,7 +42,6 @@ def draw_pose_subset(image, pose_results):
         y = int(lm.y * h)
         cv2.circle(image, (x, y), 5, (0, 200, 255), -1)
 
-    # draw lines between selected upper-body joints
     pairs = [
         ("left_shoulder", "right_shoulder"),
         ("left_shoulder", "left_elbow"),
@@ -54,6 +59,9 @@ def draw_pose_subset(image, pose_results):
 
 
 def draw_face_subset(image, face_results):
+    if face_results is None:
+        return
+
     if not face_results.multi_face_landmarks:
         return
 
@@ -87,7 +95,7 @@ def draw_debug_text(
         f"draw hands: {draw_hands_on}",
         f"draw pose: {draw_pose_on}",
         f"draw face: {draw_face_on}",
-        "keys: q quit | d all | h hands | p pose | f face",
+        "keys: q quit | r reset | d all | h hands | p pose | f face",
     ]
 
     y = 42

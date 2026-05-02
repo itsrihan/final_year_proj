@@ -5,7 +5,7 @@ import os
 FRAMES = 24
 
 # Confidence threshold will matter later during prediction
-THRESHOLD = 0.50
+THRESHOLD = 0.60
 
 # Pose landmarks we actually care about
 POSE_LANDMARKS = {

@@ -1,156 +1,417 @@
-# CSS Structure Documentation
+# CSS Architecture & Styling Reference
 
-## Overview
-The CSS has been split into component-specific files organized in a dedicated `css/` directory for better maintainability and clarity. All styles are imported via `css/index.css` which is imported in `ui.jsx`.
+> **For comprehensive frontend architecture, component details, and data flow:** See [FRONTEND_INFO.md](./FRONTEND_INFO.md)
+>
+> This document focuses on CSS organization, theming, and styling patterns.
 
-## Directory Structure
+---
+
+## Quick Overview
+
+CSS is organized in a dedicated `css/` directory with component-specific files imported via `css/index.css`. This approach provides clarity, maintainability, and scalability while keeping styles modular and easy to locate.
+
+---
+
+## CSS File Structure
 
 ```
 components/
 ├── css/
-│   ├── index.css                 (Master import file)
-│   ├── global.css                (Theme variables, animations, responsive)
-│   ├── MeetingLayout.css         (Main container & layout)
-│   ├── MeetingVideoStage.css     (Camera/video display)
-│   ├── CaptionsPanel.css         (ASL recognition overlay)
-│   ├── SidePanel.css             (Right side panel with tabs)
-│   ├── PeoplePanel.css           (Participant list)
-│   ├── ChatPanel.css             (Chat messages)
-│   ├── ControlButton.css         (Individual buttons)
-│   ├── ControlsBar.css           (Bottom control bar)
-│   ├── FloatingElements.css      (Meeting code & person indicators)
-│   └── PanelTabs.css             (Tab reference file)
-├── ui.jsx                        (Main UI component, imports css/index.css)
-├── CSS_STRUCTURE.md              (This file)
-└── meeting/
-    ├── MeetingLayout.jsx
-    ├── MeetingVideoStage.jsx
-    ├── CaptionsPanel.jsx
-    ├── SidePanel.jsx
-    └── ... (other components)
+│   ├── index.css                 (Master import file - single entry point)
+│   ├── global.css                (Theme vars, animations, responsive queries)
+│   ├── MeetingLayout.css         (App container and main layout)
+│   ├── MeetingVideoStage.css     (Video display, ASL overlay)
+│   ├── CaptionsPanel.css         (Recognition metrics in side panel)
+│   ├── SidePanel.css             (Panel container, header, tabs)
+│   ├── PeoplePanel.css           (Participant list and avatars)
+│   ├── ChatPanel.css             (Chat message display)
+│   ├── ControlButton.css         (Individual control button)
+│   ├── ControlsBar.css           (Bottom control bar container)
+│   ├── FloatingElements.css      (Meeting code, theme toggle, participant indicator)
+│   ├── LiveCaptionTray.css       (Live translation text strip)
+│   └── PanelTabs.css             (Tab button styling reference)
+└── FRONTEND_INFO.md              (Full architecture guide)
 ```
 
-## File Organization
+---
 
-### Global Styles (`css/global.css`)
-Contains theme variables, animations, scrollbar styling, and responsive breakpoints
-- CSS variables for dark/light themes
-- Keyframe animations (slideInRight, slideInDown, slideUp, fadeIn)
-- Base HTML/body styles
-- Responsive media queries (1024px, 768px, 480px)
+## How CSS Is Imported
 
-### Component-Specific Styles (in `css/` directory)
+**Single import point:** `css/index.css`
 
-#### Layout
-- **`MeetingLayout.css`** - Main container and layout structure
-  - `.app` - Root app container
-  - `.main-layout` - Main flex container with row direction
+```css
+@import "global.css";
+@import "MeetingLayout.css";
+@import "MeetingVideoStage.css";
+@import "SidePanel.css";
+@import "CaptionsPanel.css";
+@import "PeoplePanel.css";
+@import "ChatPanel.css";
+@import "ControlButton.css";
+@import "ControlsBar.css";
+@import "FloatingElements.css";
+@import "LiveCaptionTray.css";
+@import "PanelTabs.css";
+```
 
-#### Video Display
-- **`MeetingVideoStage.css`** - Camera/video display component
-  - `.video-area` - Video container with rounded borders
-  - `.main-video-container` - Main video display area
-  - `.video-frame` - Frame wrapper
-  - `.video-element` - HTML video element
-  - `.camera-off-state` - Offline camera state display
-  - `.video-overlay-name` - Name overlay (You • Presenter)
+This file is imported **once** in `ui.jsx`, ensuring CSS is bundled efficiently with no redundant imports.
 
-#### Side Panel & Tabs
-- **`SidePanel.css`** - Right slide-in panel structure
-  - `.side-panel` - Main panel container with border and shadow
-  - `.panel-header` - Header with close button
-  - `.panel-close` - Close button styling
-  - `.side-tabs` - Tab navigation bar
-  - `.tab` and `.tab.active` - Tab button styling
-  - `.panel-content` - Content container for tabs
+---
 
-#### Caption/ASL Overlay
-- **`CaptionsPanel.css`** - ASL recognition overlay
-  - `.asl-overlay` - Overlay container with blur effect
-  - `.asl-overlay-title` - Title text
-  - `.asl-overlay-text` - Recognition result text
-  - `.asl-overlay-confidence` - Confidence score display
+## Global Styles (css/global.css)
 
-#### People/Participants List
-- **`PeoplePanel.css`** - Participant list display
-  - `.status-chip` - Status badge
-  - `.info-box` - Information box styling
-  - `.info-label` and `.info-value` - Info text styling
-  - `.person-item` - Individual participant item
-  - `.person-avatar` - Avatar circle
-  - `.person-details` - Name and meta info
-  - `.status-indicator` - Status dot (active/online)
+### CSS Variables (Theme Support)
 
-#### Chat Messages
-- **`ChatPanel.css`** - Chat messages display
-  - `.chat-box` - Message container
-  - `.chat-user` - Username styling
-  - `.chat-message` - Message text styling
+Both dark and light themes are defined using CSS custom properties:
 
-#### Control Buttons
-- **`ControlButton.css`** - Individual button component
-  - `.control-btn` - Regular control button
-  - `.end-btn` - End call button (danger color)
-  - `.btn-icon` - Icon container
-  - `.btn-tooltip` - Hover tooltip display
-  - Hover and active states
+```css
+html[data-theme="dark"] {
+  --color-bg: #1a1a1a;
+  --color-text: #ffffff;
+  --color-border: #333333;
+  /* ... more variables */
+}
 
-#### Control Bar
-- **`ControlsBar.css`** - Bottom control bar
-  - `.bottom-bar` - Container for all buttons
-  - Button styling specific to the bar
-  - Dark/light theme support
+html[data-theme="light"] {
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-border: #cccccc;
+  /* ... more variables */
+}
+```
 
-#### Floating Elements
-- **`FloatingElements.css`** - Floating indicators and info
-  - `.floating-meeting-info` - Meeting code display
-  - `.meeting-code` - Code box styling
-  - `.code-label` and `.code-value` - Code text styling
-  - `.theme-toggle-float` - Theme toggle button
-  - `.floating-person` - Participant indicator box
-  - `.floating-person.you` and `.floating-person.other` - Positioning
-  - `.person-avatar-float` - Small avatar in indicator
-  - `.status-dot` - Connection status indicator
+**Theming mechanism:**
+- App.jsx reads theme from localStorage
+- Sets `document.documentElement.setAttribute("data-theme", theme)`
+- All components use CSS variables (e.g., `background-color: var(--color-bg)`)
+- Theme toggle button triggers re-render
 
-#### Panel Tabs
-- **`PanelTabs.css`** - References SidePanel.css for shared tab styles
+### Animations
 
-## Import Order
-Files are imported in `css/index.css` in this order:
-1. `global.css` - Base styles and variables
-2. Layout components
-3. Content components
-4. Interactive components
-5. Floating/overlay components
+Keyframe animations for UI transitions:
 
-## Theming
-All components support both dark and light themes via `html[data-theme="light"]` selectors.
-CSS variables from `global.css` are used throughout for consistent theming.
+- `slideInRight` – side panel entrance
+- `slideInDown` – top element entrance
+- `slideUp` – bottom element movement
+- `fadeIn` – opacity fade in
 
-## Responsive Design
-Responsive breakpoints are defined in `global.css`:
-- **Large screens (1024px)** - Minor adjustments to sizes and spacing
-- **Tablets (768px)** - Side panel becomes full-width, floating elements hidden
-- **Mobile (480px)** - Optimized for small screens
+### Responsive Breakpoints
 
-## How to Use
-When working on a specific component:
-1. Find the corresponding `.css` file in `css/` directory
-2. Update only that file
-3. Restart dev server if needed
-4. Changes are automatically included via the `css/index.css` import
+Three main breakpoints defined in `global.css`:
 
-## Benefits
-✅ **Clarity** - Each component file contains only its own styles  
-✅ **Maintainability** - Easy to find and update specific component styles  
-✅ **Scalability** - New components can have their own CSS files  
-✅ **Organization** - Clear separation of concerns in a dedicated directory  
-✅ **Performance** - CSS is still bundled together, no additional HTTP requests  
-✅ **Navigation** - Simple `css/` directory structure makes file discovery easy  
+```css
+@media (max-width: 1024px) { /* Large screens */ }
+@media (max-width: 768px)  { /* Tablets */ }
+@media (max-width: 480px)  { /* Mobile */ }
+```
 
-## File Naming Convention
-- Component CSS files are named after their corresponding JSX component
-- Example: `MeetingLayout.jsx` → `MeetingLayout.css`
-- Global styles go in `global.css`
-- Master imports in `index.css`
+**Responsive Changes:**
+- **≤480px (Mobile):** Hidden floating elements, full-width video, stacked layout
+- **481–768px (Tablet):** Side panel becomes full-width when open, adjusted spacing
+- **≥769px (Desktop):** Side panel fixed width, side-by-side layout, all floating elements visible
+
+---
+
+## Component-Specific CSS Files
+
+### Layout Components
+
+**`MeetingLayout.css`**
+- `.app` – Root container with theme attribute
+- `.main-layout` – Flex container managing video + panel layout
+- `.main-layout.panel-open` – Layout adjustment when side panel is visible
+
+**`MeetingVideoStage.css`**
+- `.video-area` – Container with rounded borders and shadow
+- `.main-video-container` – Video viewport wrapper
+- `.video-frame` – Frame wrapper for positioning
+- `.video-element` – The actual `<video>` element
+- `.camera-off-state` – Placeholder when camera is disabled
+- `.video-overlay-name` – "You • Presenter" label overlay
+- `.asl-overlay` – ASL recognition box with blur background
+- `.asl-overlay-title`, `.asl-overlay-text`, `.asl-overlay-confidence` – Recognition display
+
+### Panel Components
+
+**`SidePanel.css`**
+- `.side-panel` – Main panel container (fixed width on desktop, full-width on mobile)
+- `.panel-header` – Header with tab navigation and close button
+- `.panel-close` – Close button (✕)
+- `.side-tabs` – Tab navigation bar
+- `.tab` – Individual tab button
+- `.tab.active` – Active tab highlight
+- `.panel-content` – Content area below tabs
+
+**`PanelTabs.css`**
+- References styles from `SidePanel.css` for tab buttons
+
+**`CaptionsPanel.css`**
+- `.status-chip` – "Translator ON/OFF" badge
+- `.info-box` – Container for each info item
+- `.info-label` – Label text (gray)
+- `.info-value` – Value text (bright/prominent)
+- `.info-value.small` – Smaller text for secondary values
+- `.helper-text` – Explanatory text at bottom
+
+**`PeoplePanel.css`**
+- `.person-item` – Individual participant card
+- `.person-avatar` – Avatar circle with initials
+- `.person-details` – Name and metadata
+- `.person-name` – Participant name
+- `.status-indicator` – Online/offline dot
+
+**`ChatPanel.css`**
+- `.chat-box` – Message container
+- `.chat-user` – Username label
+- `.chat-message` – Message text
+- `.chat-timestamp` – Message time
+
+### Control Components
+
+**`ControlButton.css`**
+- `.control-btn` – Standard control button
+- `.control-btn:hover` – Hover state
+- `.control-btn.active` – Active/toggled state
+- `.btn-icon` – Icon container
+- `.btn-tooltip` – Tooltip text (shown on hover)
+- `.end-btn` – Danger-variant button (red styling)
+
+**`ControlsBar.css`**
+- `.bottom-bar` – Footer container with all buttons
+- Button layout and spacing
+- Dark/light theme support for bar background
+
+### Floating Elements
+
+**`FloatingElements.css`**
+- `.floating-meeting-info` – Container for meeting code and theme toggle
+- `.meeting-code` – Meeting code box with label and code
+- `.code-label`, `.code-value` – Code text parts
+- `.theme-toggle-float` – Theme toggle button in floating area
+- `.floating-person` – Floating participant indicator
+- `.floating-person.you` – Current user indicator (corner position)
+- `.floating-person.other` – Other participant (different corner)
+- `.person-avatar-float` – Small avatar in floating card
+- `.person-name-float` – Name in floating card
+- `.status-dot` – Connection indicator dot (online/offline)
+
+### Caption Display
+
+**`LiveCaptionTray.css`**
+- `.live-caption-tray` – Container for live translation text
+- `.live-caption-tray.visible` – Show/hide toggle
+- `.live-caption-label` – "Live ASL Translation" header
+- `.live-caption-text` – Translated text display
+- `.live-caption-text.empty` – Styling when no text
+
+---
+
+## Naming Conventions
+
+### BEM-Inspired Pattern
+
+**Block:** `.control-btn`
+**Element:** `.btn-icon`, `.btn-tooltip`
+**Modifier:** `.control-btn.active`, `.end-btn`
+
+### State Classes
+
+- `.active` – Active/selected state
+- `.danger-state` – Danger/error state (red)
+- `.visible` – Visibility toggle
+- `.panel-open` – Layout state (panel is open)
+- `.online` / `.offline` – Connection status
+- `.empty` – Empty content state
+
+### Responsive Classes
+
+Applied via media queries; no specific class names (CSS handles via breakpoints).
+
+---
+
+## Theme Implementation
+
+### How It Works
+
+1. **Storage:** Theme preference saved in localStorage as `"app-theme"`
+2. **Initialization:** App.jsx reads localStorage on mount
+3. **Application:** `document.documentElement.setAttribute("data-theme", theme)`
+4. **Scoping:** All CSS selectors use `html[data-theme="dark"]` or `html[data-theme="light"]`
+5. **Fallback:** Default theme is "dark"
+
+### Using Theme Variables in Components
+
+In any CSS file, reference variables:
+
+```css
+.my-component {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+```
+
+No additional logic needed; CSS automatically applies correct colors based on active theme.
+
+### Adding New Theme Variables
+
+1. Open `css/global.css`
+2. Add variable to both `html[data-theme="dark"]` and `html[data-theme="light"]`
+3. Use in other CSS files via `var(--variable-name)`
+
+---
+
+## Responsive Design Strategy
+
+### Mobile-First Approach
+
+Styles are written for mobile first, then enhanced for larger screens via media queries.
+
+### Breakpoint Strategy
+
+```css
+/* Base styles (mobile: 0–480px) */
+.my-element { width: 100%; }
+
+/* Tablet: 481–768px */
+@media (min-width: 481px) {
+  .my-element { width: 50%; }
+}
+
+/* Desktop: 769px+ */
+@media (min-width: 769px) {
+  .my-element { width: 33%; }
+}
+```
+
+### Layout Changes by Screen Size
+
+| Feature | Mobile | Tablet | Desktop |
+|---------|--------|--------|---------|
+| Side Panel | Full-width, modal | Full-width, modal | Fixed width, always visible |
+| Floating Code | Hidden | Hidden | Visible, fixed position |
+| Floating Participant | Hidden | Hidden | Visible, corner |
+| Video Size | Full viewport | Full viewport | Reduced for panel |
+| Control Bar | Full-width | Full-width | Centered |
+
+---
+
+## Common CSS Patterns
+
+### Flex Layout
+
+Most containers use flexbox:
+
+```css
+.main-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+  }
+}
+```
+
+### Overlay Pattern
+
+For overlays (ASL recognition box, tooltips):
+
+```css
+.asl-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 10;
+}
+```
+
+### State-Driven Styling
+
+Toggle visibility and color based on data attributes:
+
+```css
+.control-btn.active {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.control-btn:hover:not(.active) {
+  opacity: 0.8;
+}
+```
+
+---
+
+## Performance Considerations
+
+1. **Single Import:** CSS imported once in `ui.jsx`, not scattered across components
+2. **CSS Variables:** Used instead of inline styles for theme switching
+3. **Animations:** `transform` and `opacity` used (GPU-accelerated)
+4. **Responsive:** Media queries used instead of JavaScript-driven resizing
+5. **No Unused CSS:** Each file contains only styles for its component
+
+---
+
+## How to Update Styles
+
+### For Existing Components
+
+1. Find the corresponding `.css` file in `components/css/`
+2. Locate the class name in the JSX component
+3. Update the CSS in the appropriate file
+4. Save; dev server hot-reloads automatically
+
+### For New Components
+
+1. Create `NewComponent.jsx` in `components/meeting/`
+2. Create `NewComponent.css` in `components/css/`
+3. Import CSS in `css/index.css` at appropriate position
+4. Use class names from the new CSS file in the JSX
+5. Dev server automatically applies new styles
+
+---
+
+## Debugging CSS Issues
+
+### Check Applied Theme
+
+In browser DevTools Console:
+```javascript
+document.documentElement.getAttribute("data-theme")
+```
+
+### Inspect Element
+
+1. Right-click element → Inspect
+2. Check computed styles
+3. Verify `data-theme` attribute is correct
+4. Check CSS variable values
+
+### Check CSS Import Order
+
+CSS specificity issue? Check `css/index.css` import order. Later imports override earlier ones.
+
+### Media Query Testing
+
+1. Open DevTools
+2. Toggle device toolbar (Ctrl+Shift+M / Cmd+Shift+M)
+3. Drag to different sizes
+4. Check which breakpoint is active via console
+
+---
+
+## Summary
+
+CSS is organized per-component in a dedicated `css/` directory. Theme support is implemented via CSS variables and the `data-theme` attribute. Responsive design uses mobile-first approach with three main breakpoints. BEM-inspired naming keeps selectors clear and maintainable. Single import point in `css/index.css` ensures efficient bundling and prevents duplicate CSS in production.
+
+For full architectural details, component explanations, and data flow, see [FRONTEND_INFO.md](./FRONTEND_INFO.md).
 

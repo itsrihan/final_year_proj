@@ -53,7 +53,7 @@ class LandmarkExtractor:
 
         hands_results = self.hands.process(rgb)
         pose_results = self.pose.process(rgb)
-        face_results = None
+        face_results = self.face_mesh.process(rgb)
 
         rgb.flags.writeable = True
 
