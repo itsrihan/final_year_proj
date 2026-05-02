@@ -13,3 +13,5 @@
 @import './ControlsBar.css';
 @import './FloatingElements.css';
 @import './PanelTabs.css';
+@import "SignAvatarTile.css";
+@import "TextToSignInput.css";

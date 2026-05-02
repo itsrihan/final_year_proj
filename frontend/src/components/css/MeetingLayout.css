@@ -26,15 +26,62 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 12px;
   min-width: 0;
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .video-caption-layout.caption-open {
-  gap: 8px;
+  gap: 12px;
 }
 
 .main-layout.panel-open {
   /* Side panel opens as sibling, video-caption-layout naturally shrinks */
+}
+
+/* ===== MEETING VIDEO GRID ===== */
+.meeting-video-grid {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+}
+
+.meeting-video-grid.text-sign-layout {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.meeting-video-grid.text-sign-layout .main-video-container,
+.meeting-video-grid.text-sign-layout .video-area {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.meeting-video-grid.text-sign-layout .sign-avatar-tile {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+}
+
+/* Responsive layout for smaller screens */
+@media (max-width: 900px) {
+  .meeting-video-grid.text-sign-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .meeting-video-grid.text-sign-layout .sign-avatar-tile {
+    width: 100%;
+  }
 }

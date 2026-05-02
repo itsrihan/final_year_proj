@@ -13,9 +13,11 @@ function ControlsBar({
   micOn,
   cameraOn,
   aslEnabled,
+  textToSignMode,
   onToggleMic,
   onToggleCamera,
   onToggleAsl,
+  onToggleTextToSign,
   onEndCall,
   onOpenPanel,
   panelOpen,
@@ -44,6 +46,14 @@ function ControlsBar({
         className={aslEnabled ? "active" : ""}
       >
         <FiGlobe size={20} />
+      </ControlButton>
+
+      <ControlButton
+        tooltip={textToSignMode ? "Back to Sign to Text" : "Text to Sign"}
+        className={textToSignMode ? "active" : ""}
+        onClick={onToggleTextToSign}
+      >
+        <span className="btn-icon">✍️</span>
       </ControlButton>
 
       <ControlButton onClick={onOpenPanel} tooltip="Chat" className={panelOpen ? "active" : ""}>

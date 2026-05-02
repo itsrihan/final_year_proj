@@ -28,6 +28,7 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/sign_videos/
 
 # Generated ML / dataset artifacts
 dataset/
@@ -52,3 +53,7 @@ Thumbs.db
 .idea/
 
 data/
+
+sign_videos/
+
+frontend/public/
