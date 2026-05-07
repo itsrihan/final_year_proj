@@ -44,6 +44,7 @@ function MeetingLayout({
 
   const textToSign = useTextToSign();
   const speech = useSpeechToText({
+    autoRestart: audioToSignMode && micOn,
     onFinalText: (text) => {
       textToSign.submitText(text);
     },
@@ -123,13 +124,21 @@ function MeetingLayout({
 
               <div className="text-to-sign-status">
                 <span>Speak naturally, then pause to submit.</span>
+                {speech.heardText ? (
+                  <span>
+                    Heard: {speech.heardText}
+                  </span>
+                ) : speech.transcript ? (
+                  <span>
+                    Heard: {speech.transcript}
+                  </span>
+                ) : null}
                 {speech.speechError && (
                   <span className="text-to-sign-missing">{speech.speechError}</span>
                 )}
                 {!micOn && (
                   <span className="text-to-sign-missing">Turn on mic to use audio-to-sign.</span>
                 )}
-                <span>Speak naturally, then pause to submit.</span>
               </div>
             </div>
           ) : (

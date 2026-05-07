@@ -41,7 +41,7 @@ function MeetingVideoStage({
             </div>
           )}
 
-          {cameraOn && micOn && (
+          {micOn && (
             <div className="mic-wave" aria-hidden="true">
               {[0.2, 0.45, 0.75, 1, 0.75, 0.45, 0.2].map((multiplier, index) => (
                 <span

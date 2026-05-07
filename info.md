@@ -7,6 +7,8 @@ for debug: (in venv) python debug\debug_capture.py
 
 for venv in linux: source ~/asl_venv/bin/activate
 
+ export CORS_ALLOW_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://192.168.0.147:5173"
+
 
 
 
