@@ -34,7 +34,7 @@ export function useTextToSign() {
 
   function handleVideoEnded() {
     setCurrentIndex((prev) => {
-      if (prev + 1 >= signQueue.length) return prev;
+      if (prev + 1 >= signQueue.length) return signQueue.length;
       return prev + 1;
     });
   }
