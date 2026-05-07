@@ -3,6 +3,7 @@ function SignAvatarTile({
   videoSrc,
   currentWord,
   onEnded,
+  emptyMessage,
 }) {
   if (!visible) return null;
 
@@ -21,7 +22,7 @@ function SignAvatarTile({
           />
         ) : (
           <div className="sign-avatar-empty">
-            Type a sentence to generate signs
+            {emptyMessage || "Type a sentence to generate signs"}
           </div>
         )}
       </div>

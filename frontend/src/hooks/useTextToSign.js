@@ -16,15 +16,20 @@ export function useTextToSign() {
     return getSignVideoPath(signLanguage, currentWord);
   }, [signLanguage, currentWord]);
 
-  function handleSubmit() {
-    const trimmed = inputText.trim();
+  function submitText(text) {
+    const trimmed = String(text).trim();
     if (!trimmed) return;
 
     const result = textToSignWords(trimmed);
 
+    setInputText(trimmed);
     setSignQueue(result.selected);
     setMissingWords(result.missing);
     setCurrentIndex(0);
+  }
+
+  function handleSubmit() {
+    submitText(inputText);
   }
 
   function handleVideoEnded() {
@@ -51,6 +56,7 @@ export function useTextToSign() {
     currentIndex,
     currentWord,
     currentVideoSrc,
+    submitText,
     handleSubmit,
     handleVideoEnded,
     resetTextToSign,

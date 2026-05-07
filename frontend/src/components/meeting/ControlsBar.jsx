@@ -14,10 +14,12 @@ function ControlsBar({
   cameraOn,
   aslEnabled,
   textToSignMode,
+  audioToSignMode,
   onToggleMic,
   onToggleCamera,
   onToggleAsl,
   onToggleTextToSign,
+  onToggleAudioToSign,
   onEndCall,
   onOpenPanel,
   panelOpen,
@@ -54,6 +56,14 @@ function ControlsBar({
         onClick={onToggleTextToSign}
       >
         <span className="btn-icon">✍️</span>
+      </ControlButton>
+
+      <ControlButton
+        tooltip="Audio to SL"
+        className={audioToSignMode ? "active" : ""}
+        onClick={onToggleAudioToSign}
+      >
+        <span className="btn-icon">🎤</span>
       </ControlButton>
 
       <ControlButton onClick={onOpenPanel} tooltip="Chat" className={panelOpen ? "active" : ""}>

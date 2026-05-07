@@ -3,10 +3,12 @@ import { FiVideoOff } from "react-icons/fi";
 function MeetingVideoStage({
   videoRef,
   cameraOn,
+  micOn,
   aslEnabled,
   showCaptions,
   prediction,
   confidence,
+  micLevel = 0,
 }) {
   return (
     <section className="video-area">
@@ -36,6 +38,21 @@ function MeetingVideoStage({
               <div className="asl-overlay-confidence">
                 Confidence: {confidence.toFixed(2)}
               </div>
+            </div>
+          )}
+
+          {cameraOn && micOn && (
+            <div className="mic-wave" aria-hidden="true">
+              {[0.2, 0.45, 0.75, 1, 0.75, 0.45, 0.2].map((multiplier, index) => (
+                <span
+                  key={index}
+                  className="mic-wave-bar"
+                  style={{
+                    height: `${Math.max(10, 10 + micLevel * multiplier * 32)}px`,
+                    opacity: 0.35 + micLevel * 0.65,
+                  }}
+                />
+              ))}
             </div>
           )}
         </div>

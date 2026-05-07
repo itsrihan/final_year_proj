@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiMoon, FiSun } from "react-icons/fi";
 import ControlsBar from "./ControlsBar";
 import MeetingVideoStage from "./MeetingVideoStage";
@@ -7,7 +7,10 @@ import FloatingParticipant from "./FloatingParticipant";
 import LiveCaptionTray from "./LiveCaptionTray";
 import SignAvatarTile from "./SignAvatarTile";
 import TextToSignInput from "./TextToSignInput";
+import SignLanguageSelect from "./SignLanguageSelect";
 import { useTextToSign } from "../../hooks/useTextToSign";
+import { useSpeechToText } from "../../hooks/useSpeechToText";
+import { useMicLevel } from "../../hooks/useMicLevel";
 
 function MeetingLayout({
   videoRef,
@@ -37,34 +40,60 @@ function MeetingLayout({
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [textToSignMode, setTextToSignMode] = useState(false);
+  const [audioToSignMode, setAudioToSignMode] = useState(false);
 
   const textToSign = useTextToSign();
+  const speech = useSpeechToText({
+    onFinalText: (text) => {
+      textToSign.submitText(text);
+    },
+  });
+  const micLevel = useMicLevel(micOn);
 
-  const captionOpen = aslEnabled && showCaptions && !textToSignMode;
+  const captionOpen = aslEnabled && showCaptions && !textToSignMode && !audioToSignMode;
 
   function handleToggleTextToSign() {
+    setAudioToSignMode(false);
     setTextToSignMode((prev) => !prev);
   }
+
+  function handleToggleAudioToSign() {
+    setTextToSignMode(false);
+    setAudioToSignMode((prev) => !prev);
+  }
+
+  useEffect(() => {
+    if (audioToSignMode && micOn) {
+      speech.startListening();
+      return undefined;
+    }
+
+    speech.stopListening();
+    return undefined;
+  }, [audioToSignMode, micOn]);
 
   return (
     <div className="app" data-theme={theme}>
       <main className={`main-layout ${panelOpen ? "panel-open" : ""}`}>
         <section className={`video-caption-layout ${captionOpen ? "caption-open" : ""}`}>
-          <div className={`meeting-video-grid ${textToSignMode ? "text-sign-layout" : ""}`}>
+          <div className={`meeting-video-grid ${(textToSignMode || audioToSignMode) ? "text-sign-layout" : ""}`}>
             <MeetingVideoStage
               videoRef={videoRef}
               cameraOn={cameraOn}
+              micOn={micOn}
               aslEnabled={aslEnabled}
               showCaptions={showCaptions}
               prediction={prediction}
               confidence={confidence}
+              micLevel={micLevel}
             />
 
             <SignAvatarTile
-              visible={textToSignMode}
+              visible={textToSignMode || audioToSignMode}
               videoSrc={textToSign.currentVideoSrc}
               currentWord={textToSign.currentWord}
               onEnded={textToSign.handleVideoEnded}
+              emptyMessage={audioToSignMode ? "Speak to generate signs" : "Type a sentence to generate signs"}
             />
           </div>
 
@@ -79,6 +108,30 @@ function MeetingLayout({
               currentWord={textToSign.currentWord}
               missingWords={textToSign.missingWords}
             />
+          ) : audioToSignMode ? (
+            <div className="text-to-sign-box audio-to-sign-box">
+              <div className="text-to-sign-header">
+                <span>Audio to SL</span>
+                <SignLanguageSelect
+                  value={textToSign.signLanguage}
+                  onChange={textToSign.setSignLanguage}
+                />
+                <span className={`audio-to-sign-state ${speech.listening ? "active" : ""}`}>
+                  {speech.listening ? "Listening" : micOn ? "Ready" : "Mic off"}
+                </span>
+              </div>
+
+              <div className="text-to-sign-status">
+                <span>Speak naturally, then pause to submit.</span>
+                {speech.speechError && (
+                  <span className="text-to-sign-missing">{speech.speechError}</span>
+                )}
+                {!micOn && (
+                  <span className="text-to-sign-missing">Turn on mic to use audio-to-sign.</span>
+                )}
+                <span>Speak naturally, then pause to submit.</span>
+              </div>
+            </div>
           ) : (
             <LiveCaptionTray
               visible={captionOpen}
@@ -132,10 +185,12 @@ function MeetingLayout({
         cameraOn={cameraOn}
         aslEnabled={aslEnabled}
         textToSignMode={textToSignMode}
+        audioToSignMode={audioToSignMode}
         onToggleMic={onToggleMic}
         onToggleCamera={onToggleCamera}
         onToggleAsl={onToggleAsl}
         onToggleTextToSign={handleToggleTextToSign}
+        onToggleAudioToSign={handleToggleAudioToSign}
         onEndCall={() => {}}
         onOpenPanel={() => setPanelOpen(!panelOpen)}
         panelOpen={panelOpen}

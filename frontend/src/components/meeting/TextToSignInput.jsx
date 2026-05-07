@@ -1,3 +1,5 @@
+import SignLanguageSelect from "./SignLanguageSelect";
+
 function TextToSignInput({
   inputText,
   onInputChange,
@@ -18,16 +20,9 @@ function TextToSignInput({
   return (
     <div className="text-to-sign-box">
       <div className="text-to-sign-header">
-        <span>Text to Sign</span>
+        <span>Text to SL</span>
 
-        <select
-          className="text-to-sign-select"
-          value={signLanguage}
-          onChange={(event) => onLanguageChange(event.target.value)}
-        >
-          <option value="asl">ASL</option>
-          <option value="russian">Russian Sign</option>
-        </select>
+        <SignLanguageSelect value={signLanguage} onChange={onLanguageChange} />
       </div>
 
       <input

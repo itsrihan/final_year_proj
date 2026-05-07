@@ -73,6 +73,26 @@
   outline: none;
 }
 
+.text-to-sign-mic {
+  margin-top: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-soft);
+  color: var(--color-text);
+  border-radius: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.text-to-sign-mic.active {
+  background: var(--color-accent);
+  color: white;
+}
+
+.text-to-sign-mic:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .text-to-sign-status {
   margin-top: 10px;
   display: flex;
@@ -80,6 +100,29 @@
   gap: 4px;
   color: var(--color-text-muted);
   font-size: 13px;
+}
+
+.audio-to-sign-box {
+  border-top: 1px solid var(--color-border);
+}
+
+.audio-to-sign-box .text-to-sign-header {
+  gap: 12px;
+}
+
+.audio-to-sign-state {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.audio-to-sign-state.active {
+  color: var(--color-accent);
+}
+
+.audio-to-sign-box .text-to-sign-status {
+  margin-top: 12px;
 }
 
 .text-to-sign-missing {
