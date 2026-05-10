@@ -8,12 +8,51 @@ function MeetingVideoStage({
   showCaptions,
   prediction,
   confidence,
+  handsCount = 0,
+  aslCaptureState,
+  manualCaptureState,
+  countdownMs = 0,
   micLevel = 0,
 }) {
+  const text = typeof prediction === "string" ? prediction.trim() : "";
+  const isTranslating = text === "Translating...";
+  const isWaiting = text === "Waiting...";
+  const isSpecial =
+    !text ||
+    isTranslating ||
+    isWaiting ||
+    text === "ASL off" ||
+    text === "Model unavailable" ||
+    text.toLowerCase() === "null";
+  const isDoneTranslating = !isSpecial && confidence > 0;
+
+  let indicatorState = "off";
+  if (cameraOn && aslEnabled) {
+    if (aslCaptureState === "manual") {
+      // Manual mode: derive ring from manualCaptureState
+      if (countdownMs > 0) {
+        indicatorState = "translating";  // Red during countdown
+      } else if (manualCaptureState === "manual_capturing" || manualCaptureState === "manual_predicting") {
+        indicatorState = "translating";  // Red
+      } else if (manualCaptureState === "manual_result") {
+        indicatorState = "hand-detected";  // Amber
+      } else {
+        indicatorState = "ready";  // Green = manual_ready
+      }
+    } else if (aslCaptureState === "ready") {
+      indicatorState = "ready";  // Green
+    } else if (aslCaptureState === "capturing") {
+      indicatorState = "translating";  // Red
+    } else if (aslCaptureState === "predicting") {
+      indicatorState = "translating";  // Red
+    } else if (aslCaptureState === "wait_for_release") {
+      indicatorState = "hand-detected";  // Amber
+    }
+  }
   return (
     <section className="video-area">
       <div className="main-video-container">
-        <div className="video-frame">
+        <div className={`video-frame asl-indicator asl-indicator-${indicatorState}`}>
           {cameraOn ? (
             <video
               ref={videoRef}

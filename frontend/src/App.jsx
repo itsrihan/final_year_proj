@@ -31,11 +31,18 @@ function App() {
     inferenceMode,
     status,
     timeNow,
+    aslCaptureState,
+    manualMode,
+    manualCaptureState,
+    countdownMs,
+    setManualMode,
     setMicOn,
     toggleAsl,
     setShowCaptions,
     setActiveTab,
     toggleCamera,
+    startManualCapture,
+    cancelManualCapture,
   } = useAslStream();
 
   return (
@@ -57,11 +64,18 @@ function App() {
       inferenceMode={inferenceMode}
       status={status}
       timeNow={timeNow}
+      aslCaptureState={aslCaptureState}
+      manualMode={manualMode}
+      manualCaptureState={manualCaptureState}
+      countdownMs={countdownMs}
       onToggleMic={() => setMicOn((prev) => !prev)}
       onToggleCamera={toggleCamera}
       onToggleCaptions={() => setShowCaptions((prev) => !prev)}
       onToggleAsl={toggleAsl}
       onSetActiveTab={setActiveTab}
+      onToggleManualMode={() => setManualMode((prev) => !prev)}
+      onStartManualCapture={startManualCapture}
+      onCancelManualCapture={cancelManualCapture}
       theme={theme}
       onThemeToggle={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
     />

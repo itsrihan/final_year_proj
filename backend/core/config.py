@@ -1,8 +1,8 @@
-# backend/core/config.py
+# backend/core/config.py (for main project) - Centralized configuration for the sign language recognition system, including landmark indices, feature vector dimensions, smoothing parameters, and file paths for model artifacts and datasets. This module serves as a single source of truth for all constants and settings used across the backend components.
 
 import os
 
-FRAMES = 24
+FRAMES = 35
 
 # Confidence threshold will matter later during prediction
 THRESHOLD = 0.60
@@ -46,6 +46,13 @@ POSE_FEATURES = len(POSE_LANDMARKS) * 4  # x, y, z, visibility
 FACE_FEATURES = len(FACE_LANDMARKS) * 3  # x, y, z
 
 FEATURES_PER_FRAME = TOTAL_HAND_FEATURES + POSE_FEATURES + FACE_FEATURES
+
+# Hand-feature post-processing during inference.
+# Keep alpha near 1.0 to stay closer to raw training-time motion.
+HAND_SMOOTH_ALPHA = 0.5
+
+# Interpolate only very short hand dropouts to avoid long ghost trails.
+HAND_MAX_INTERP_FRAMES = 5
 
 # Centralized backend paths for model artifacts and phrase dataset.
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

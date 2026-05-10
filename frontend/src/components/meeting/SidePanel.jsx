@@ -14,6 +14,13 @@ function SidePanel({
   inferenceDevice,
   inferenceMode,
   status,
+  manualMode,
+  manualCaptureState,
+  countdownMs,
+  cameraOn,
+  onToggleManualMode,
+  onStartManualCapture,
+  onCancelManualCapture,
   onSetActiveTab,
   onClose,
 }) {
@@ -35,6 +42,13 @@ function SidePanel({
           inferenceDevice={inferenceDevice}
           inferenceMode={inferenceMode}
           status={status}
+          manualMode={manualMode}
+          manualCaptureState={manualCaptureState}
+          countdownMs={countdownMs}
+          cameraOn={cameraOn}
+          onToggleManualMode={onToggleManualMode}
+          onStartManualCapture={onStartManualCapture}
+          onCancelManualCapture={onCancelManualCapture}
         />
       )}
 

@@ -7,3 +7,11 @@ class PredictorState(Enum):
     SIGNING = auto()
     CONFIRMED = auto()
     HOLD = auto()  # Added: display confirmed label for HOLD_FRAMES before re-signing
+
+
+class CaptureState(Enum):
+    """States for demo-stable capture and prediction."""
+    READY = auto()
+    CAPTURING = auto()
+    PREDICTING = auto()
+    WAIT_FOR_RELEASE = auto()

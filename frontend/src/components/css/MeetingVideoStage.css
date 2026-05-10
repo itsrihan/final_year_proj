@@ -34,6 +34,49 @@
   background: transparent;
 }
 
+.asl-indicator {
+  border-radius: 12px;
+  isolation: isolate;
+}
+
+.asl-indicator::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: box-shadow 180ms ease, border-color 180ms ease, opacity 180ms ease;
+  border: 1px solid transparent;
+}
+
+.asl-indicator.asl-indicator-translating::after {
+  opacity: 1;
+  border-color: rgba(244, 63, 94, 0.52);
+  box-shadow:
+    0 0 0 1px rgba(244, 63, 94, 0.2),
+    0 0 18px rgba(244, 63, 94, 0.24),
+    inset 0 0 20px rgba(244, 63, 94, 0.12);
+}
+
+.asl-indicator.asl-indicator-hand-detected::after {
+  opacity: 1;
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.16),
+    0 0 14px rgba(245, 158, 11, 0.2),
+    inset 0 0 16px rgba(245, 158, 11, 0.08);
+}
+
+.asl-indicator.asl-indicator-ready::after {
+  opacity: 1;
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.18),
+    0 0 14px rgba(34, 197, 94, 0.18),
+    inset 0 0 16px rgba(34, 197, 94, 0.08);
+}
+
 .video-element {
   width: 100%;
   height: 100%;

@@ -1,4 +1,4 @@
-# backend/core/landmarks.py
+#landmarks.py - Extracts and normalizes MediaPipe hand, pose, and face landmarks into a fixed-size feature vector per frame. Implements smoothing and interpolation to handle hand tracking dropouts gracefully.
 
 from dataclasses import dataclass
 
@@ -6,7 +6,14 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-from core.config import FACE_LANDMARKS, FEATURES_PER_FRAME, POSE_LANDMARKS
+from core.config import (
+    FACE_LANDMARKS,
+    FEATURES_PER_FRAME,
+    HAND_MAX_INTERP_FRAMES,
+    HAND_SMOOTH_ALPHA,
+    POSE_LANDMARKS,
+)
+from core.config import HAND_FEATURES_PER_HAND, TOTAL_HAND_FEATURES
 
 mp_hands = mp.solutions.hands
 mp_pose = mp.solutions.pose
@@ -22,21 +29,40 @@ class MediaPipeBundle:
 
 class LandmarkExtractor:
     def __init__(self):
+        # --- Smoothing and interpolation state ---
+        # Exponential smoothing alpha: 0 = fully smooth, 1 = no smoothing
+        self._smooth_alpha = HAND_SMOOTH_ALPHA
+
+        # Last known good hand features (used for interpolation)
+        self._prev_hand_features = None
+
+        # Raw hand features from last frame hands were actually detected
+        # Used as the interpolation start point
+        self._last_detected_hand_features = None
+
+        # How many consecutive frames hands have been lost
+        self._hand_dropout_frames = 0
+
+        # Max frames to interpolate across before giving up and zeroing out
+        self._max_interp_frames = HAND_MAX_INTERP_FRAMES
+
+        # FIX: model_complexity matched to collection (1 not 0)
+        # FIX: confidence thresholds matched to collection file
         self.hands = mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=2,
-            model_complexity=0,
-            min_detection_confidence=0.25,
-            min_tracking_confidence=0.25,
-)
+            model_complexity=1,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.4,
+        )
 
         self.pose = mp_pose.Pose(
             static_image_mode=False,
-            model_complexity=0,
+            model_complexity=1,
             smooth_landmarks=True,
             enable_segmentation=False,
             min_detection_confidence=0.5,
-            min_tracking_confidence=0.5,
+            min_tracking_confidence=0.4,
         )
 
         self.face_mesh = mp_face_mesh.FaceMesh(
@@ -44,7 +70,7 @@ class LandmarkExtractor:
             max_num_faces=1,
             refine_landmarks=False,
             min_detection_confidence=0.5,
-            min_tracking_confidence=0.5,
+            min_tracking_confidence=0.4,
         )
 
     def process_frame(self, frame_bgr):
@@ -107,22 +133,26 @@ class LandmarkExtractor:
         return ((xyz - anchor) / scale).astype(np.float32)
 
     def extract_hand_features(self, hands_results, anchor, scale):
-        features = []
+        # FIX: old code appended None to hand_list causing iteration bugs.
+        # Now builds clean list and pads separately.
+        hands_data = []
 
         if hands_results and hands_results.multi_hand_landmarks:
-            hand_list = hands_results.multi_hand_landmarks[:2]
-
-            for hand_landmarks in hand_list:
+            for hand_landmarks in hands_results.multi_hand_landmarks[:2]:
+                hand_features = []
                 for lm in hand_landmarks.landmark:
                     xyz = np.array([lm.x, lm.y, lm.z], dtype=np.float32)
                     xyz = self._normalize_xyz(xyz, anchor, scale)
-                    features.extend(xyz.tolist())
+                    hand_features.extend(xyz.tolist())
+                hands_data.append(hand_features)
 
-            while len(hand_list) < 2:
-                features.extend([0.0] * 63)
-                hand_list.append(None)
-        else:
-            features.extend([0.0] * 126)
+        # Pad missing hands with zeros
+        while len(hands_data) < 2:
+            hands_data.append([0.0] * HAND_FEATURES_PER_HAND)
+
+        features = []
+        for hand in hands_data:
+            features.extend(hand)
 
         return features
 
@@ -165,6 +195,67 @@ class LandmarkExtractor:
 
         return features
 
+    def _apply_hand_smoothing(self, features, hands_detected):
+        """
+        Two-stage hand smoothing:
+
+        Stage 1 - Exponential smoothing (always active when hands detected):
+            Blends current frame with previous to reduce per-frame jitter.
+            formula: output = alpha * current + (1 - alpha) * previous
+
+        Stage 2 - Linear interpolation across dropout frames:
+            When hands are briefly lost (fast movement), instead of snapping
+            to zeros, we bridge from the last known position toward zeros
+            over _max_interp_frames frames. This fills the gap caused by
+            MediaPipe losing tracking mid-motion.
+
+            t=0 (last detected) ... t=1 (max_interp_frames reached) -> zeros
+            Each dropout frame moves t forward proportionally.
+        """
+        hand_len = TOTAL_HAND_FEATURES
+        current_hand = features[:hand_len].copy()
+
+        if hands_detected:
+            # Reset dropout counter - hands are visible again
+            self._hand_dropout_frames = 0
+
+            if self._prev_hand_features is not None:
+                # Stage 1: exponential smoothing over jitter
+                smoothed = (
+                    self._smooth_alpha * current_hand
+                    + (1.0 - self._smooth_alpha) * self._prev_hand_features
+                )
+            else:
+                smoothed = current_hand
+
+            self._prev_hand_features = smoothed.copy()
+            self._last_detected_hand_features = smoothed.copy()
+            features[:hand_len] = smoothed
+
+        else:
+            # Hands not detected this frame
+            self._hand_dropout_frames += 1
+
+            if (
+                self._last_detected_hand_features is not None
+                and self._hand_dropout_frames <= self._max_interp_frames
+            ):
+                # Stage 2: interpolate from last known position toward zeros
+                # t goes from 0 (just lost) to 1 (max gap reached)
+                t = self._hand_dropout_frames / self._max_interp_frames
+                interpolated = (
+                    (1.0 - t) * self._last_detected_hand_features
+                )
+                self._prev_hand_features = interpolated.copy()
+                features[:hand_len] = interpolated
+            else:
+                # Gap too long or no prior detection - genuine absence, zero out
+                self._prev_hand_features = None
+                self._last_detected_hand_features = None
+                features[:hand_len] = 0.0
+
+        return features
+
     def extract_features(self, mp_bundle):
         anchor, scale = self._get_pose_anchor_and_scale(mp_bundle.pose_results)
 
@@ -174,6 +265,14 @@ class LandmarkExtractor:
 
         features = hand_features + pose_features + face_features
         features = np.asarray(features, dtype=np.float32)
+
+        # Determine if hands were actually detected this frame
+        hands_detected = (
+            mp_bundle.hands_results is not None
+            and mp_bundle.hands_results.multi_hand_landmarks is not None
+        )
+
+        features = self._apply_hand_smoothing(features, hands_detected)
 
         if features.shape[0] != FEATURES_PER_FRAME:
             raise RuntimeError(

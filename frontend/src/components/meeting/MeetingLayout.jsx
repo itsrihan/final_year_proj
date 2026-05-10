@@ -37,6 +37,13 @@ function MeetingLayout({
   onSetActiveTab,
   theme,
   onThemeToggle,
+  aslCaptureState,
+  manualMode,
+  manualCaptureState,
+  countdownMs,
+  onToggleManualMode,
+  onStartManualCapture,
+  onCancelManualCapture,
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [textToSignMode, setTextToSignMode] = useState(false);
@@ -86,6 +93,10 @@ function MeetingLayout({
               showCaptions={showCaptions}
               prediction={prediction}
               confidence={confidence}
+              handsCount={handsCount}
+              aslCaptureState={aslCaptureState}
+              manualCaptureState={manualCaptureState}
+              countdownMs={countdownMs}
               micLevel={micLevel}
             />
 
@@ -161,6 +172,13 @@ function MeetingLayout({
             inferenceDevice={inferenceDevice}
             inferenceMode={inferenceMode}
             status={status}
+            manualMode={manualMode}
+            manualCaptureState={manualCaptureState}
+            countdownMs={countdownMs}
+            cameraOn={cameraOn}
+            onToggleManualMode={onToggleManualMode}
+            onStartManualCapture={onStartManualCapture}
+            onCancelManualCapture={onCancelManualCapture}
             onSetActiveTab={onSetActiveTab}
             onClose={() => setPanelOpen(false)}
           />

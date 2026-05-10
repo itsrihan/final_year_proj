@@ -57,3 +57,12 @@ data/
 sign_videos/
 
 frontend/public/
+ 
+# Ignore .env files in frontend and backend
+/frontend/.env
+/frontend/**/*.env
+/backend/.env
+/backend/**/*.env
+
+/models/
+models/

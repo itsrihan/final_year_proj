@@ -16,6 +16,9 @@ from core.config import (
 )
 
 
+_LAST_PHRASE_ASSET_DEBUG_INFO = None
+
+
 gpus = tf.config.list_physical_devices("GPU")
 if gpus:
     tf.config.experimental.set_memory_growth(gpus[0], True)
@@ -28,20 +31,150 @@ def _is_valid_artifact(path):
     return os.path.exists(path) and os.path.getsize(path) > 0
 
 
-def _load_label_map(labels_path):
+def _coerce_int(value):
+    if isinstance(value, bool):
+        raise ValueError("boolean values are not valid indexes")
+
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+
+    raise ValueError(f"cannot convert {value!r} to int")
+
+
+def _normalize_labels_payload(payload):
+    if isinstance(payload, list):
+        labels = [str(label) for label in payload]
+        if not labels:
+            raise ValueError("label list is empty")
+        return labels
+
+    if not isinstance(payload, dict) or not payload:
+        raise ValueError("labels JSON must be a non-empty list or dict")
+
+    keys = list(payload.keys())
+    values = list(payload.values())
+
+    keys_are_numeric = all(isinstance(key, str) and key.strip().isdigit() for key in keys)
+    values_are_numeric = all(isinstance(value, (int, str)) and str(value).strip().isdigit() for value in values)
+
+    if keys_are_numeric:
+        sorted_items = sorted(payload.items(), key=lambda item: int(str(item[0]).strip()))
+        labels = [str(label) for _, label in sorted_items]
+        if not labels:
+            raise ValueError("numeric-key label dict is empty")
+        return labels
+
+    if values_are_numeric:
+        index_to_label = {}
+        for label, index in payload.items():
+            index_to_label[_coerce_int(index)] = str(label)
+
+        if not index_to_label:
+            raise ValueError("label-to-index dict is empty")
+
+        return [label for _, label in sorted(index_to_label.items(), key=lambda item: item[0])]
+
+    raise ValueError("unsupported labels JSON format")
+
+
+def _load_label_list(labels_path):
     if not _is_valid_artifact(labels_path):
         return None
 
     try:
         with open(labels_path, "r", encoding="utf-8") as f:
-            label_map = json.load(f)
-    except (OSError, json.JSONDecodeError):
-        return None
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"failed to read labels file {labels_path}: {error}") from error
 
-    if not isinstance(label_map, dict) or not label_map:
-        return None
+    return _normalize_labels_payload(payload)
 
-    return {str(label): int(index) for label, index in label_map.items()}
+
+def _shape_to_text(shape):
+    if shape is None:
+        return "None"
+
+    try:
+        return str(tuple(shape))
+    except TypeError:
+        return str(shape)
+
+
+def _inspect_existing_phrase_assets(model_path=PHRASE_MODEL_PATH, labels_path=PHRASE_LABELS_PATH):
+    model_path_exists = _is_valid_artifact(model_path)
+    labels_path_exists = _is_valid_artifact(labels_path)
+
+    debug_info = {
+        "model_available": False,
+        "model_path": model_path,
+        "labels_path": labels_path,
+        "model_path_exists": model_path_exists,
+        "labels_path_exists": labels_path_exists,
+        "model_input_shape": None,
+        "model_output_shape": None,
+        "labels_count": 0,
+        "labels": [],
+        "error": None,
+    }
+
+    if not model_path_exists or not labels_path_exists:
+        debug_info["error"] = "model or labels file missing"
+        return debug_info
+
+    try:
+        labels = _load_label_list(labels_path)
+        if labels is None:
+            raise RuntimeError("labels file could not be loaded")
+
+        model = _try_load_model(model_path)
+
+        dummy = np.zeros((1, FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
+        model(dummy, training=False)
+
+        model_input_shape = getattr(model, "input_shape", None)
+        model_output_shape = getattr(model, "output_shape", None)
+
+        expected_input_shape = (None, FRAMES, FEATURES_PER_FRAME)
+        if tuple(model_input_shape) != expected_input_shape:
+            raise RuntimeError(
+                f"model input shape {tuple(model_input_shape)} does not match expected {expected_input_shape}"
+            )
+
+        output_units = None
+        if isinstance(model_output_shape, (list, tuple)) and model_output_shape:
+            output_units = model_output_shape[-1]
+
+        if output_units is not None and int(output_units) != len(labels):
+            raise RuntimeError(
+                f"model output classes ({output_units}) do not match labels count ({len(labels)})"
+            )
+
+        debug_info["model_available"] = True
+        debug_info["model_input_shape"] = _shape_to_text(model_input_shape)
+        debug_info["model_output_shape"] = _shape_to_text(model_output_shape)
+        debug_info["labels_count"] = len(labels)
+        debug_info["labels"] = labels
+        debug_info["model"] = model
+        global _LAST_PHRASE_ASSET_DEBUG_INFO
+        _LAST_PHRASE_ASSET_DEBUG_INFO = dict(debug_info)
+        return debug_info
+
+    except Exception as error:
+        debug_info["error"] = str(error)
+        return debug_info
+
+
+def _load_existing_phrase_assets(model_path=PHRASE_MODEL_PATH, labels_path=PHRASE_LABELS_PATH):
+    debug_info = _inspect_existing_phrase_assets(model_path, labels_path)
+    if not debug_info["model_available"]:
+        raise RuntimeError(debug_info["error"] or "failed to load phrase assets")
+
+    model = debug_info.get("model")
+    labels = debug_info["labels"]
+    return model, {index: label for index, label in enumerate(labels)}, debug_info
 
 
 def _normalize_sequence(sequence):
@@ -211,37 +344,74 @@ def _try_load_model(model_path):
             raise RuntimeError(str(first_error))
 
 
+def get_phrase_assets_debug_info(
+    model_path=PHRASE_MODEL_PATH,
+    labels_path=PHRASE_LABELS_PATH,
+    data_dir=PHRASE_DATA_DIR,
+):
+    global _LAST_PHRASE_ASSET_DEBUG_INFO
+
+    if _LAST_PHRASE_ASSET_DEBUG_INFO:
+        cached = _LAST_PHRASE_ASSET_DEBUG_INFO
+        if cached.get("model_path") == model_path and cached.get("labels_path") == labels_path:
+            debug_info = dict(cached)
+            debug_info.pop("model", None)
+            return debug_info
+
+    debug_info = _inspect_existing_phrase_assets(model_path, labels_path)
+    debug_info.pop("model", None)
+
+    if debug_info.get("model_available"):
+        _LAST_PHRASE_ASSET_DEBUG_INFO = dict(debug_info)
+
+    if debug_info["model_available"]:
+        return debug_info
+
+    if not _is_valid_artifact(model_path) and not _is_valid_artifact(labels_path):
+        debug_info["error"] = debug_info["error"] or "model and labels files are missing"
+
+    return debug_info
+
+
 @lru_cache(maxsize=1)
 def load_phrase_assets(
     model_path=PHRASE_MODEL_PATH,
     labels_path=PHRASE_LABELS_PATH,
     data_dir=PHRASE_DATA_DIR,
 ):
-    label_map = _load_label_map(labels_path)
+    global _LAST_PHRASE_ASSET_DEBUG_INFO
 
-    if _is_valid_artifact(model_path) and label_map:
-        try:
-            model = _try_load_model(model_path)
+    if _is_valid_artifact(model_path) and _is_valid_artifact(labels_path):
+        model, label_index_map, debug_info = _load_existing_phrase_assets(model_path, labels_path)
+        _LAST_PHRASE_ASSET_DEBUG_INFO = dict(debug_info)
 
-            dummy = np.zeros((1, FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
-            model(dummy, training=False)
+        print(f"[INFO] phrase model path: {model_path}")
+        print(f"[INFO] phrase labels path: {labels_path}")
+        print(f"[INFO] model_path_exists={debug_info['model_path_exists']} labels_path_exists={debug_info['labels_path_exists']}")
+        print(f"[INFO] model_input_shape={debug_info['model_input_shape']} model_output_shape={debug_info['model_output_shape']}")
+        print(f"[INFO] labels_count={debug_info['labels_count']} labels={debug_info['labels']}")
+        print("[INFO] Model warmed up")
 
-            print("[INFO] Model warmed up")
-            print(f"[INFO] Loaded labels: {label_map}")
+        return model, label_index_map
 
-            return model, {index: label for label, index in label_map.items()}
-
-        except Exception as e:
-            print(f"[WARN] Existing model could not be loaded: {e}")
-            print("[INFO] Rebuilding model from local phrase data...")
-    else:
-        print("[INFO] Existing model or labels missing. Training a fresh model...")
-
+    print("[INFO] Existing model or labels missing. Training a fresh model...")
     model, label_index_map = _train_phrase_model(model_path, labels_path, data_dir)
 
     dummy = np.zeros((1, FRAMES, FEATURES_PER_FRAME), dtype=np.float32)
     model(dummy, training=False)
 
     print("[INFO] Model warmed up")
+    _LAST_PHRASE_ASSET_DEBUG_INFO = {
+        "model_available": True,
+        "model_path": model_path,
+        "labels_path": labels_path,
+        "model_path_exists": True,
+        "labels_path_exists": True,
+        "model_input_shape": _shape_to_text(getattr(model, "input_shape", None)),
+        "model_output_shape": _shape_to_text(getattr(model, "output_shape", None)),
+        "labels_count": len(label_index_map),
+        "labels": [label_index_map[index] for index in sorted(label_index_map.keys())],
+        "error": None,
+    }
 
     return model, label_index_map
